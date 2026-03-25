@@ -1,6 +1,6 @@
 # ProdOps Control Tower MCP
 
-`prodops-control-tower-mcp` is a production-grade, read-only Model Context Protocol server for IDFC FIRST Bank's Production Support Intelligence domain. It turns Kubernetes into the runtime truth plane, Prometheus into the metrics truth plane, and Grafana into the visualization and evidence plane, then exposes that unified operational context to external AI clients over MCP.
+`prodops-control-tower-mcp` is a production-grade, read-only Model Context Protocol server for Bank's Production Support Intelligence domain. It turns Kubernetes into the runtime truth plane, Prometheus into the metrics truth plane, and Grafana into the visualization and evidence plane, then exposes that unified operational context to external AI clients over MCP.
 
 This server is intentionally deterministic. It does not embed a chat model and it does not make external LLM calls. Its intelligence comes from weighted scoring, timeline correlation, topology inference, bounded PromQL access, explicit evidence packs, and transparent confidence calculation.
 
