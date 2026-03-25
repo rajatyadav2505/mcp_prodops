@@ -1,0 +1,241 @@
+{
+  "cluster": {
+    "name": "bank-uat",
+    "environment": "UAT",
+    "kubernetesVersion": "1.30.2",
+    "region": "in-west-1",
+    "metadata": {
+      "scenario": "payments_rollout_regression"
+    }
+  },
+  "namespaces": [
+    {
+      "cluster": "bank-uat",
+      "name": "payments-uat",
+      "labels": {
+        "owner-team": "cards-platform",
+        "criticality": "critical"
+      },
+      "ownerTeam": "cards-platform",
+      "criticality": "critical",
+      "critical": true
+    }
+  ],
+  "workloads": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "payments-uat",
+      "name": "payments-api",
+      "kind": "DEPLOYMENT",
+      "labels": {
+        "app": "payments-api",
+        "owner-team": "cards-platform"
+      },
+      "selector": {
+        "app": "payments-api"
+      },
+      "desiredReplicas": 4,
+      "readyReplicas": 2,
+      "createdAt": "2026-03-25T07:00:00Z",
+      "updatedAt": "2026-03-25T10:10:00Z",
+      "ownerTeam": "cards-platform",
+      "criticality": "critical"
+    }
+  ],
+  "pods": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "payments-uat",
+      "name": "payments-api-74c6d85d97-2g4jk",
+      "phase": "Running",
+      "ready": true,
+      "restartCount": 0,
+      "containerStates": ["app:running"],
+      "lastTerminationReason": "none",
+      "createdAt": "2026-03-25T10:11:00Z",
+      "ownerReference": {
+        "cluster": "bank-uat",
+        "namespace": "payments-uat",
+        "kind": "Deployment",
+        "name": "payments-api"
+      }
+    },
+    {
+      "cluster": "bank-uat",
+      "namespace": "payments-uat",
+      "name": "payments-api-74c6d85d97-5r9vq",
+      "phase": "CrashLoopBackOff",
+      "ready": false,
+      "restartCount": 6,
+      "containerStates": ["app:CrashLoopBackOff"],
+      "lastTerminationReason": "Error",
+      "createdAt": "2026-03-25T10:11:00Z",
+      "ownerReference": {
+        "cluster": "bank-uat",
+        "namespace": "payments-uat",
+        "kind": "Deployment",
+        "name": "payments-api"
+      }
+    }
+  ],
+  "warningEvents": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "payments-uat",
+      "reason": "BackOff",
+      "message": "Back-off restarting failed container app in pod payments-api-74c6d85d97-5r9vq",
+      "involvedKind": "Pod",
+      "involvedName": "payments-api",
+      "count": 8,
+      "firstTimestamp": "2026-03-25T10:12:00Z",
+      "lastTimestamp": "2026-03-25T10:28:00Z"
+    },
+    {
+      "cluster": "bank-uat",
+      "namespace": "payments-uat",
+      "reason": "ProgressDeadlineExceeded",
+      "message": "Deployment payments-api exceeded its progress deadline after revision 112 rolled out.",
+      "involvedKind": "Deployment",
+      "involvedName": "payments-api",
+      "count": 2,
+      "firstTimestamp": "2026-03-25T10:18:00Z",
+      "lastTimestamp": "2026-03-25T10:31:00Z"
+    }
+  ],
+  "services": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "payments-uat",
+      "name": "payments-api",
+      "type": "ClusterIP",
+      "selector": {
+        "app": "payments-api"
+      }
+    }
+  ],
+  "ingresses": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "payments-uat",
+      "name": "payments-public",
+      "hosts": ["payments-uat.example.bank"],
+      "backendServices": ["payments-api"]
+    }
+  ],
+  "hpas": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "payments-uat",
+      "name": "payments-api",
+      "minReplicas": 2,
+      "maxReplicas": 6,
+      "currentReplicas": 4,
+      "scaleConstrained": false
+    }
+  ],
+  "pdbs": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "payments-uat",
+      "name": "payments-api",
+      "minAvailable": "2",
+      "maxUnavailable": "null",
+      "disruptionsAllowed": 0
+    }
+  ],
+  "dashboards": [
+    {
+      "cluster": "bank-uat",
+      "uid": "payments-latency",
+      "title": "Payments API Golden Signals",
+      "folder": "ProdOps",
+      "tags": ["payments", "latency", "uat"],
+      "url": "https://grafana.example.bank/d/payments-latency/payments-api",
+      "panels": [
+        {
+          "title": "Error Rate",
+          "description": "5xx ratio for payments-api",
+          "targets": ["sum(rate(http_requests_total{app=\"payments-api\",status=~\"5..\"}[5m]))"]
+        }
+      ],
+      "variables": ["namespace", "service"],
+      "datasourceHints": ["prometheus-uat"]
+    }
+  ],
+  "metrics": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "payments-uat",
+      "scope": "payments-api",
+      "goldenSignals": [
+        {
+          "name": "error_rate_ratio",
+          "unit": "ratio",
+          "value": 0.82,
+          "status": "high",
+          "observedAt": "2026-03-25T10:32:00Z",
+          "query": "error_rate_payments_api",
+          "explanation": "Error ratio breached the configured risk threshold after rollout revision 112."
+        },
+        {
+          "name": "latency_slo_ratio",
+          "unit": "ratio",
+          "value": 0.91,
+          "status": "high",
+          "observedAt": "2026-03-25T10:32:00Z",
+          "query": "latency_payments_api",
+          "explanation": "p95 latency rose above the service SLO budget immediately after rollout."
+        },
+        {
+          "name": "cpu_saturation_ratio",
+          "unit": "ratio",
+          "value": 0.47,
+          "status": "moderate",
+          "observedAt": "2026-03-25T10:32:00Z",
+          "query": "cpu_payments_api",
+          "explanation": "CPU is elevated but not the dominant failure signal."
+        },
+        {
+          "name": "memory_pressure_ratio",
+          "unit": "ratio",
+          "value": 0.52,
+          "status": "moderate",
+          "observedAt": "2026-03-25T10:32:00Z",
+          "query": "memory_payments_api",
+          "explanation": "Memory pressure is secondary relative to restart and error signals."
+        }
+      ],
+      "series": [
+        {
+          "name": "latency",
+          "query": "forecast_cpu_payments-api",
+          "unit": "ratio",
+          "labels": {
+            "service": "payments-api"
+          },
+          "points": [
+            {"timestamp": "2026-03-25T09:30:00Z", "value": 0.34},
+            {"timestamp": "2026-03-25T09:45:00Z", "value": 0.39},
+            {"timestamp": "2026-03-25T10:00:00Z", "value": 0.41},
+            {"timestamp": "2026-03-25T10:15:00Z", "value": 0.52},
+            {"timestamp": "2026-03-25T10:30:00Z", "value": 0.58}
+          ]
+        }
+      ]
+    }
+  ],
+  "logs": [
+    {
+      "podName": "payments-api-74c6d85d97-5r9vq",
+      "container": "app",
+      "collectedAt": "2026-03-25T10:33:00Z",
+      "lines": [
+        "java.lang.IllegalStateException: incompatible config schema in revision 112",
+        "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.verylongtokenvalue",
+        "Failed to bind settlement route"
+      ],
+      "truncated": false
+    }
+  ],
+  "catalogEntries": []
+}

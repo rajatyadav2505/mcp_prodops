@@ -1,0 +1,24 @@
+services:
+  - serviceId: payments-api
+    displayName: Payments API
+    cluster: payments-dev
+    namespace: payments
+    workloadName: payments-api
+    workloadKind: DEPLOYMENT
+    serviceName: payments-api
+    criticality: critical
+    ownerTeam: payments-platform
+    dashboardUids:
+      - dash-payments-api
+    sloTargets:
+      - name: latency
+        objective: "99.9"
+        threshold: "250ms"
+        measurementWindow: PT30D
+    runbookLinks:
+      - https://example.invalid/runbooks/payments-api
+    promqlTemplates:
+      error_rate: sum(rate(http_requests_total{status=~"5.."}[5m]))
+      latency: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+      cpu: sum(rate(container_cpu_usage_seconds_total[5m]))
+      memory: sum(container_memory_working_set_bytes)

@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "prodops-control-tower-mcp.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "prodops-control-tower-mcp.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "prodops-control-tower-mcp.fullname" . }}
+        app.kubernetes.io/component: mcp-server
+    spec:
+      serviceAccountName: {{ include "prodops-control-tower-mcp.serviceAccountName" . }}
+      containers:
+        - name: prodops-control-tower-mcp
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: management
+              containerPort: 8081
+          envFrom:
+            - configMapRef:
+                name: {{ include "prodops-control-tower-mcp.fullname" . }}-config
+          env:
+            - name: PROMETHEUS_BEARER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretRefs.name }}
+                  key: PROMETHEUS_BEARER_TOKEN
+            - name: GRAFANA_BEARER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretRefs.name }}
+                  key: GRAFANA_BEARER_TOKEN
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: management
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: management

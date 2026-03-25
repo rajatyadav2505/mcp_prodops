@@ -1,0 +1,57 @@
+image: maven:3.9.9-eclipse-temurin-21
+
+definitions:
+  caches:
+    maven: ~/.m2/repository
+  services:
+    docker:
+      memory: 4096
+
+pipelines:
+  default:
+    - step:
+        name: Verify
+        caches:
+          - maven
+        script:
+          - chmod +x mvnw
+          - ./mvnw -B -ntp clean verify
+        artifacts:
+          - target/**
+    - step:
+        name: Build container
+        image: docker:27.3.1
+        services:
+          - docker
+        script:
+          - docker build -t prodops-control-tower-mcp:${BITBUCKET_COMMIT} .
+  branches:
+    main:
+      - step:
+          name: Verify
+          caches:
+            - maven
+          script:
+            - chmod +x mvnw
+            - ./mvnw -B -ntp clean verify
+          artifacts:
+            - target/**
+      - step:
+          name: Build container
+          image: docker:27.3.1
+          services:
+            - docker
+          script:
+            - docker build -t prodops-control-tower-mcp:${BITBUCKET_COMMIT} .
+  pull-requests:
+    "**":
+      - step:
+          name: Verify pull request
+          caches:
+            - maven
+          script:
+            - chmod +x mvnw
+            - ./mvnw -B -ntp clean verify
+
+options:
+  size: 2x

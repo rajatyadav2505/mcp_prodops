@@ -1,0 +1,201 @@
+{
+  "cluster": {
+    "name": "bank-uat",
+    "environment": "UAT",
+    "kubernetesVersion": "1.30.2",
+    "region": "in-west-1",
+    "metadata": {
+      "scenario": "tradex_alert_storm"
+    }
+  },
+  "namespaces": [
+    {
+      "cluster": "bank-uat",
+      "name": "tradex-edge",
+      "labels": {
+        "owner-team": "tradex",
+        "criticality": "high"
+      },
+      "ownerTeam": "tradex",
+      "criticality": "high",
+      "critical": true
+    }
+  ],
+  "workloads": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "tradex-edge",
+      "name": "tradex-gateway",
+      "kind": "DEPLOYMENT",
+      "labels": {
+        "app": "tradex-gateway",
+        "owner-team": "tradex"
+      },
+      "selector": {
+        "app": "tradex-gateway"
+      },
+      "desiredReplicas": 4,
+      "readyReplicas": 4,
+      "createdAt": "2026-03-25T06:00:00Z",
+      "updatedAt": "2026-03-25T07:00:00Z",
+      "ownerTeam": "tradex",
+      "criticality": "high"
+    }
+  ],
+  "pods": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "tradex-edge",
+      "name": "tradex-gateway-56b9dbb7d4-1a2bc",
+      "phase": "Running",
+      "ready": true,
+      "restartCount": 1,
+      "containerStates": ["app:running"],
+      "lastTerminationReason": "Completed",
+      "createdAt": "2026-03-25T07:01:00Z",
+      "ownerReference": {
+        "cluster": "bank-uat",
+        "namespace": "tradex-edge",
+        "kind": "Deployment",
+        "name": "tradex-gateway"
+      }
+    }
+  ],
+  "warningEvents": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "tradex-edge",
+      "reason": "SyntheticMonitorTransientFailure",
+      "message": "Upstream synthetic monitor retries triggered transient warning bursts.",
+      "involvedKind": "Deployment",
+      "involvedName": "tradex-gateway",
+      "count": 24,
+      "firstTimestamp": "2026-03-25T09:05:00Z",
+      "lastTimestamp": "2026-03-25T10:25:00Z"
+    }
+  ],
+  "services": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "tradex-edge",
+      "name": "tradex-gateway",
+      "type": "ClusterIP",
+      "selector": {
+        "app": "tradex-gateway"
+      }
+    }
+  ],
+  "ingresses": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "tradex-edge",
+      "name": "tradex-public",
+      "hosts": ["tradex-uat.example.bank"],
+      "backendServices": ["tradex-gateway"]
+    }
+  ],
+  "hpas": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "tradex-edge",
+      "name": "tradex-gateway",
+      "minReplicas": 2,
+      "maxReplicas": 6,
+      "currentReplicas": 4,
+      "scaleConstrained": false
+    }
+  ],
+  "pdbs": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "tradex-edge",
+      "name": "tradex-gateway",
+      "minAvailable": "3",
+      "maxUnavailable": "null",
+      "disruptionsAllowed": 1
+    }
+  ],
+  "dashboards": [
+    {
+      "cluster": "bank-uat",
+      "uid": "tradex-alert-storm",
+      "title": "Tradex Gateway Alert Triage",
+      "folder": "ProdOps",
+      "tags": ["tradex", "noise", "uat"],
+      "url": "https://grafana.example.bank/d/tradex-alert-storm/tradex-gateway",
+      "panels": [
+        {
+          "title": "Alert Volume",
+          "description": "Warning-event bursts with customer impact overlay",
+          "targets": ["sum(alertmanager_notifications_total{service=\"tradex-gateway\"})"]
+        }
+      ],
+      "variables": ["namespace", "service"],
+      "datasourceHints": ["prometheus-uat"]
+    }
+  ],
+  "metrics": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "tradex-edge",
+      "scope": "tradex-gateway",
+      "goldenSignals": [
+        {
+          "name": "error_rate_ratio",
+          "unit": "ratio",
+          "value": 0.28,
+          "status": "normal",
+          "observedAt": "2026-03-25T10:32:00Z",
+          "query": "error_rate_tradex_gateway",
+          "explanation": "Customer-facing error rate is elevated slightly but remains below major incident thresholds."
+        },
+        {
+          "name": "latency_slo_ratio",
+          "unit": "ratio",
+          "value": 0.33,
+          "status": "normal",
+          "observedAt": "2026-03-25T10:32:00Z",
+          "query": "latency_tradex_gateway",
+          "explanation": "Latency remains inside SLO bounds."
+        },
+        {
+          "name": "cpu_saturation_ratio",
+          "unit": "ratio",
+          "value": 0.41,
+          "status": "normal",
+          "observedAt": "2026-03-25T10:32:00Z",
+          "query": "cpu_tradex_gateway",
+          "explanation": "Capacity is not the primary concern."
+        },
+        {
+          "name": "memory_pressure_ratio",
+          "unit": "ratio",
+          "value": 0.45,
+          "status": "normal",
+          "observedAt": "2026-03-25T10:32:00Z",
+          "query": "memory_tradex_gateway",
+          "explanation": "Memory usage is stable."
+        }
+      ],
+      "series": [
+        {
+          "name": "alert_noise",
+          "query": "forecast_cpu_tradex-gateway",
+          "unit": "ratio",
+          "labels": {
+            "service": "tradex-gateway"
+          },
+          "points": [
+            {"timestamp": "2026-03-25T09:30:00Z", "value": 0.22},
+            {"timestamp": "2026-03-25T09:45:00Z", "value": 0.24},
+            {"timestamp": "2026-03-25T10:00:00Z", "value": 0.27},
+            {"timestamp": "2026-03-25T10:15:00Z", "value": 0.29},
+            {"timestamp": "2026-03-25T10:30:00Z", "value": 0.31}
+          ]
+        }
+      ]
+    }
+  ],
+  "logs": [],
+  "catalogEntries": []
+}

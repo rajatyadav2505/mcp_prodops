@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: prodops-control-tower-mcp
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prodops-control-tower-mcp
+      app.kubernetes.io/component: mcp-server

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: prodops-control-tower-mcp
+description: Read-only MCP server for Production Support Intelligence across Kubernetes, Prometheus, and Grafana.
+type: application
+version: 0.1.0
+appVersion: 0.1.0-SNAPSHOT

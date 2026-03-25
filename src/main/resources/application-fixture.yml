@@ -1,0 +1,9 @@
+spring:
+  config:
+    activate:
+      on-profile: fixture
+
+prodops:
+  controltower:
+    security:
+      jwt-enabled: false

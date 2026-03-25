@@ -1,0 +1,264 @@
+{
+  "cluster": {
+    "name": "payments-dev",
+    "environment": "dev",
+    "kubernetesVersion": "configured",
+    "region": "configured",
+    "metadata": {
+      "owner-team": "payments-platform",
+      "criticality": "critical"
+    }
+  },
+  "namespaces": [
+    {
+      "cluster": "payments-dev",
+      "name": "payments",
+      "labels": {
+        "owner-team": "payments-platform",
+        "criticality": "critical"
+      },
+      "ownerTeam": "payments-platform",
+      "criticality": "critical",
+      "critical": true
+    }
+  ],
+  "workloads": [
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "name": "payments-api",
+      "kind": "DEPLOYMENT",
+      "labels": {
+        "app": "payments-api",
+        "owner-team": "payments-platform",
+        "criticality": "critical"
+      },
+      "selector": {
+        "app": "payments-api"
+      },
+      "desiredReplicas": 3,
+      "readyReplicas": 2,
+      "createdAt": "2026-03-24T12:00:00Z",
+      "updatedAt": "2026-03-24T23:30:00Z",
+      "ownerTeam": "payments-platform",
+      "criticality": "critical"
+    }
+  ],
+  "pods": [
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "name": "payments-api-7d4f6f7c6d-abc12",
+      "phase": "Running",
+      "ready": true,
+      "restartCount": 1,
+      "containerStates": [
+        "ready"
+      ],
+      "lastTerminationReason": "CrashLoopBackOff",
+      "createdAt": "2026-03-24T23:15:00Z",
+      "ownerReference": {
+        "cluster": "payments-dev",
+        "namespace": "payments",
+        "kind": "Deployment",
+        "name": "payments-api"
+      }
+    }
+  ],
+  "warningEvents": [
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "reason": "BackOff",
+      "message": "Container restarted after a failed startup probe.",
+      "involvedKind": "Deployment",
+      "involvedName": "payments-api",
+      "count": 1,
+      "firstTimestamp": "2026-03-24T23:40:00Z",
+      "lastTimestamp": "2026-03-24T23:45:00Z"
+    }
+  ],
+  "services": [
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "name": "payments-api",
+      "type": "ClusterIP",
+      "selector": {
+        "app": "payments-api"
+      }
+    }
+  ],
+  "ingresses": [
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "name": "payments-api",
+      "hosts": [
+        "payments.example.invalid"
+      ],
+      "backendServices": [
+        "payments-api"
+      ]
+    }
+  ],
+  "hpas": [
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "name": "payments-api",
+      "minReplicas": 2,
+      "maxReplicas": 5,
+      "currentReplicas": 3,
+      "scaleConstrained": false
+    }
+  ],
+  "pdbs": [
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "name": "payments-api",
+      "minAvailable": "2",
+      "maxUnavailable": "1",
+      "disruptionsAllowed": 1
+    }
+  ],
+  "dashboards": [
+    {
+      "cluster": "payments-dev",
+      "uid": "dash-payments-api",
+      "title": "Payments API Overview",
+      "folder": "Production",
+      "tags": [
+        "gold",
+        "payments"
+      ],
+      "url": "/d/dash-payments-api/payments-overview",
+      "panels": [
+        {
+          "title": "Latency",
+          "description": "P95 latency",
+          "targets": [
+            "A"
+          ]
+        }
+      ],
+      "variables": [
+        "namespace"
+      ],
+      "datasourceHints": [
+        "prometheus"
+      ]
+    }
+  ],
+  "metrics": [
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "scope": "payments-api",
+      "goldenSignals": [
+        {
+          "name": "error_rate_ratio",
+          "unit": "ratio",
+          "value": 0.85,
+          "status": "high",
+          "observedAt": "2026-03-24T23:50:00Z",
+          "query": "error_rate",
+          "explanation": "Fixture error rate"
+        },
+        {
+          "name": "latency_slo_ratio",
+          "unit": "ratio",
+          "value": 0.75,
+          "status": "moderate",
+          "observedAt": "2026-03-24T23:50:00Z",
+          "query": "latency",
+          "explanation": "Fixture latency"
+        },
+        {
+          "name": "cpu_saturation_ratio",
+          "unit": "ratio",
+          "value": 0.60,
+          "status": "moderate",
+          "observedAt": "2026-03-24T23:50:00Z",
+          "query": "cpu",
+          "explanation": "Fixture cpu"
+        },
+        {
+          "name": "memory_pressure_ratio",
+          "unit": "ratio",
+          "value": 0.40,
+          "status": "normal",
+          "observedAt": "2026-03-24T23:50:00Z",
+          "query": "memory",
+          "explanation": "Fixture memory"
+        }
+      ],
+      "series": [
+        {
+          "name": "forecast-cpu",
+          "query": "forecast_cpu_payments-api",
+          "unit": "ratio",
+          "labels": {
+            "job": "payments-api"
+          },
+          "points": [
+            {
+              "timestamp": "2026-03-24T23:00:00Z",
+              "value": 0.4
+            },
+            {
+              "timestamp": "2026-03-24T23:55:00Z",
+              "value": 0.6
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "logs": [
+    {
+      "podName": "payments-api-7d4f6f7c6d-abc12",
+      "container": "app",
+      "collectedAt": "2026-03-24T23:55:00Z",
+      "lines": [
+        "authorization: bearer secret-token",
+        "password=very-secret"
+      ],
+      "truncated": false
+    }
+  ],
+  "catalogEntries": [
+    {
+      "serviceId": "payments-api",
+      "displayName": "Payments API",
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "workloadName": "payments-api",
+      "workloadKind": "DEPLOYMENT",
+      "serviceName": "payments-api",
+      "criticality": "critical",
+      "ownerTeam": "payments-platform",
+      "dashboardUids": [
+        "dash-payments-api"
+      ],
+      "sloTargets": [
+        {
+          "name": "latency",
+          "objective": "99.9",
+          "threshold": "250ms",
+          "measurementWindow": "PT30D"
+        }
+      ],
+      "runbookLinks": [
+        "https://example.invalid/runbooks/payments-api"
+      ],
+      "promqlTemplates": {
+        "error_rate": "sum(rate(http_requests_total{status=~\"5..\"}[5m]))",
+        "latency": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+        "cpu": "sum(rate(container_cpu_usage_seconds_total[5m]))",
+        "memory": "sum(container_memory_working_set_bytes)"
+      }
+    }
+  ]
+}

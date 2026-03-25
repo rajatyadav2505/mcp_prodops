@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "prodops-control-tower-mcp.fullname" . }}-config
+data:
+  SPRING_PROFILES_ACTIVE: {{ .Values.config.springProfilesActive | quote }}
+  PRODOPS_BIND_ADDRESS: "0.0.0.0"
+  PORT: "8080"
+  MANAGEMENT_PORT: "8081"
+  PRODOPS_PUBLIC_BASE_URL: {{ .Values.config.publicBaseUrl | quote }}
+  PRODOPS_JWT_ENABLED: {{ .Values.config.jwtEnabled | quote }}
+  PRODOPS_JWT_ISSUER_URI: {{ .Values.config.jwtIssuerUri | quote }}
+  PRODOPS_JWT_JWKS_URI: {{ .Values.config.jwtJwksUri | quote }}
+  PRODOPS_JWT_AUDIENCE: {{ .Values.config.jwtAudience | quote }}
+  PRODOPS_REQUIRED_SCOPE: {{ .Values.config.requiredScope | quote }}
+  PRODOPS_PRODOPS_CLUSTERS_0_KUBERNETES_IN_CLUSTER: "true"
+  PROMETHEUS_BASE_URL: {{ .Values.config.prometheusBaseUrl | quote }}
+  GRAFANA_BASE_URL: {{ .Values.config.grafanaBaseUrl | quote }}

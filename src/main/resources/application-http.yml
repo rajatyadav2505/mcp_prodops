@@ -1,0 +1,10 @@
+spring:
+  config:
+    activate:
+      on-profile: http
+  ai:
+    mcp:
+      server:
+        protocol: STATELESS
+        stdio: false
+        mcp-endpoint: /mcp

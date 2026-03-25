@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prodops-control-tower-mcp
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  rules:
+    - host: prodops-control-tower-mcp.uat.example.bank
+      http:
+        paths:
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: prodops-control-tower-mcp
+                port:
+                  name: http

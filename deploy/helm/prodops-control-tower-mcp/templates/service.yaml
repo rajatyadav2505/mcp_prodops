@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "prodops-control-tower-mcp.fullname" . }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app.kubernetes.io/name: {{ include "prodops-control-tower-mcp.fullname" . }}
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: http
+    - name: management
+      port: {{ .Values.service.managementPort }}
+      targetPort: management

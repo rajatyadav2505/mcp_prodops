@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: prodops-control-tower
+
+commonLabels:
+  app.kubernetes.io/name: prodops-control-tower-mcp
+  app.kubernetes.io/part-of: prodops-control-tower
+  app.kubernetes.io/component: mcp-server
+
+resources:
+  - namespace.yaml
+  - serviceaccount.yaml
+  - clusterrole.yaml
+  - clusterrolebinding.yaml
+  - configmap.yaml
+  - secret-placeholder.yaml
+  - deployment.yaml
+  - service.yaml
+  - pdb.yaml
+  - hpa.yaml
+  - ingress.yaml
+  - networkpolicy.yaml

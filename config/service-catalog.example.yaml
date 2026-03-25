@@ -1,0 +1,80 @@
+services:
+  - serviceId: payments-api
+    displayName: Payments API
+    cluster: bank-uat
+    namespace: payments-uat
+    workloadName: payments-api
+    workloadKind: DEPLOYMENT
+    serviceName: payments-api
+    criticality: critical
+    ownerTeam: cards-platform
+    dashboardUids:
+      - payments-latency
+    sloTargets:
+      - name: p95 latency
+        objective: 99.0
+        threshold: 500ms
+        measurementWindow: 30d
+      - name: availability
+        objective: 99.9
+        threshold: 0.1% errors
+        measurementWindow: 30d
+    runbookLinks:
+      - https://runbooks.example.bank/payments-api
+    promqlTemplates:
+      error_rate: clamp_max(0.82,1)
+      latency: clamp_max(0.91,1)
+      cpu: clamp_max(0.47,1)
+      memory: clamp_max(0.52,1)
+      throttling: clamp_max(0.25,1)
+      saturation: clamp_max(0.68,1)
+  - serviceId: upi-recon
+    displayName: UPI Reconciliation
+    cluster: bank-uat
+    namespace: upi-ops
+    workloadName: upi-recon
+    workloadKind: DEPLOYMENT
+    serviceName: upi-recon
+    criticality: high
+    ownerTeam: recon-engineering
+    dashboardUids:
+      - upi-recon-saturation
+    sloTargets:
+      - name: p95 latency
+        objective: 99.0
+        threshold: 1500ms
+        measurementWindow: 30d
+    runbookLinks:
+      - https://runbooks.example.bank/upi-recon
+    promqlTemplates:
+      error_rate: clamp_max(0.24,1)
+      latency: clamp_max(0.86,1)
+      cpu: clamp_max(0.94,1)
+      memory: clamp_max(0.79,1)
+      throttling: clamp_max(0.61,1)
+      saturation: clamp_max(0.89,1)
+  - serviceId: tradex-gateway
+    displayName: Tradex Gateway
+    cluster: bank-uat
+    namespace: tradex-edge
+    workloadName: tradex-gateway
+    workloadKind: DEPLOYMENT
+    serviceName: tradex-gateway
+    criticality: high
+    ownerTeam: tradex
+    dashboardUids:
+      - tradex-alert-storm
+    sloTargets:
+      - name: error budget
+        objective: 99.5
+        threshold: 0.5% errors
+        measurementWindow: 30d
+    runbookLinks:
+      - https://runbooks.example.bank/tradex-gateway
+    promqlTemplates:
+      error_rate: clamp_max(0.28,1)
+      latency: clamp_max(0.33,1)
+      cpu: clamp_max(0.41,1)
+      memory: clamp_max(0.45,1)
+      throttling: clamp_max(0.22,1)
+      saturation: clamp_max(0.31,1)

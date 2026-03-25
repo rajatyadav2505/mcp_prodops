@@ -1,0 +1,13 @@
+restartWeight: 10
+warningEventWeight: 8
+rolloutFreshnessWeight: 7
+errorRateWeight: 15
+latencyWeight: 14
+cpuSaturationWeight: 10
+memoryPressureWeight: 9
+unavailableReplicaWeight: 13
+dependencyUncertaintyWeight: 7
+noiseWeight: 7
+moderateThreshold: 35
+highThreshold: 60
+criticalThreshold: 80

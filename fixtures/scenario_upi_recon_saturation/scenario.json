@@ -1,0 +1,193 @@
+{
+  "cluster": {
+    "name": "bank-uat",
+    "environment": "UAT",
+    "kubernetesVersion": "1.30.2",
+    "region": "in-west-1",
+    "metadata": {
+      "scenario": "upi_recon_saturation"
+    }
+  },
+  "namespaces": [
+    {
+      "cluster": "bank-uat",
+      "name": "upi-ops",
+      "labels": {
+        "owner-team": "recon-engineering",
+        "criticality": "high"
+      },
+      "ownerTeam": "recon-engineering",
+      "criticality": "high",
+      "critical": true
+    }
+  ],
+  "workloads": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "upi-ops",
+      "name": "upi-recon",
+      "kind": "DEPLOYMENT",
+      "labels": {
+        "app": "upi-recon",
+        "owner-team": "recon-engineering"
+      },
+      "selector": {
+        "app": "upi-recon"
+      },
+      "desiredReplicas": 3,
+      "readyReplicas": 3,
+      "createdAt": "2026-03-25T05:00:00Z",
+      "updatedAt": "2026-03-25T08:00:00Z",
+      "ownerTeam": "recon-engineering",
+      "criticality": "high"
+    }
+  ],
+  "pods": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "upi-ops",
+      "name": "upi-recon-6d9f67f546-4nb9q",
+      "phase": "Running",
+      "ready": true,
+      "restartCount": 0,
+      "containerStates": ["app:running"],
+      "lastTerminationReason": "none",
+      "createdAt": "2026-03-25T08:02:00Z",
+      "ownerReference": {
+        "cluster": "bank-uat",
+        "namespace": "upi-ops",
+        "kind": "Deployment",
+        "name": "upi-recon"
+      }
+    }
+  ],
+  "warningEvents": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "upi-ops",
+      "reason": "FailedGetResourceMetric",
+      "message": "HPA lagged because target CPU metrics remained stale during traffic burst.",
+      "involvedKind": "HorizontalPodAutoscaler",
+      "involvedName": "upi-recon",
+      "count": 3,
+      "firstTimestamp": "2026-03-25T09:30:00Z",
+      "lastTimestamp": "2026-03-25T10:20:00Z"
+    }
+  ],
+  "services": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "upi-ops",
+      "name": "upi-recon",
+      "type": "ClusterIP",
+      "selector": {
+        "app": "upi-recon"
+      }
+    }
+  ],
+  "ingresses": [],
+  "hpas": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "upi-ops",
+      "name": "upi-recon",
+      "minReplicas": 2,
+      "maxReplicas": 3,
+      "currentReplicas": 3,
+      "scaleConstrained": true
+    }
+  ],
+  "pdbs": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "upi-ops",
+      "name": "upi-recon",
+      "minAvailable": "2",
+      "maxUnavailable": "null",
+      "disruptionsAllowed": 1
+    }
+  ],
+  "dashboards": [
+    {
+      "cluster": "bank-uat",
+      "uid": "upi-recon-saturation",
+      "title": "UPI Recon Saturation",
+      "folder": "ProdOps",
+      "tags": ["upi", "capacity", "uat"],
+      "url": "https://grafana.example.bank/d/upi-recon-saturation/upi-recon",
+      "panels": [
+        {
+          "title": "CPU Saturation",
+          "description": "CPU and throttling by pod",
+          "targets": ["sum(rate(container_cpu_usage_seconds_total{app=\"upi-recon\"}[5m]))"]
+        }
+      ],
+      "variables": ["namespace", "service"],
+      "datasourceHints": ["prometheus-uat"]
+    }
+  ],
+  "metrics": [
+    {
+      "cluster": "bank-uat",
+      "namespace": "upi-ops",
+      "scope": "upi-recon",
+      "goldenSignals": [
+        {
+          "name": "error_rate_ratio",
+          "unit": "ratio",
+          "value": 0.24,
+          "status": "normal",
+          "observedAt": "2026-03-25T10:32:00Z",
+          "query": "error_rate_upi_recon",
+          "explanation": "Customer-facing errors remain controlled."
+        },
+        {
+          "name": "latency_slo_ratio",
+          "unit": "ratio",
+          "value": 0.86,
+          "status": "high",
+          "observedAt": "2026-03-25T10:32:00Z",
+          "query": "latency_upi_recon",
+          "explanation": "Latency is approaching SLO breach despite stable pod readiness."
+        },
+        {
+          "name": "cpu_saturation_ratio",
+          "unit": "ratio",
+          "value": 0.94,
+          "status": "high",
+          "observedAt": "2026-03-25T10:32:00Z",
+          "query": "cpu_upi_recon",
+          "explanation": "CPU saturation is sustained at or near the HPA ceiling."
+        },
+        {
+          "name": "memory_pressure_ratio",
+          "unit": "ratio",
+          "value": 0.79,
+          "status": "high",
+          "observedAt": "2026-03-25T10:32:00Z",
+          "query": "memory_upi_recon",
+          "explanation": "Memory pressure is elevated and contributes to queuing latency."
+        }
+      ],
+      "series": [
+        {
+          "name": "cpu_forecast",
+          "query": "forecast_cpu_upi-recon",
+          "unit": "ratio",
+          "labels": {
+            "service": "upi-recon"
+          },
+          "points": [
+            {"timestamp": "2026-03-25T09:30:00Z", "value": 0.67},
+            {"timestamp": "2026-03-25T09:45:00Z", "value": 0.73},
+            {"timestamp": "2026-03-25T10:00:00Z", "value": 0.78},
+            {"timestamp": "2026-03-25T10:15:00Z", "value": 0.86},
+            {"timestamp": "2026-03-25T10:30:00Z", "value": 0.94}
+          ]
+        }
+      ]
+    }
+  ],
+  "logs": [],
+  "catalogEntries": []
+}

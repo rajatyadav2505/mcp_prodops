@@ -1,0 +1,76 @@
+prodops:
+  controltower:
+    product-name: ProdOps Control Tower MCP
+    product-domain: Production Support Intelligence
+    catalog:
+      enabled: true
+      path: config/service-catalog.example.yaml
+      refresh-interval: PT5M
+    risk-model:
+      path: config/risk-weights.example.yaml
+      refresh-interval: PT5M
+    guardrails:
+      max-lookback: PT6H
+      max-range: PT24H
+      min-step: PT5M
+      default-lookback: PT60M
+      max-series: 250
+      max-log-lines: 100
+      max-dashboards: 10
+      max-events: 200
+      raw-promql-enabled: true
+      require-origin-validation: true
+    cache:
+      max-entries: 200
+      namespace-inventory-ttl: PT2M
+      dashboard-ttl: PT10M
+      catalog-ttl: PT5M
+    rate-limit:
+      requests-per-window: 120
+      window: PT1M
+    http:
+      bind-address: 127.0.0.1
+      mcp-path: /mcp
+      public-base-url: http://127.0.0.1:8080
+      allowed-origins:
+        - https://claude.ai
+        - https://chat.openai.com
+        - http://localhost:*
+        - http://127.0.0.1:*
+    security:
+      jwt-enabled: false
+      allow-anonymous-local-http: true
+      issuer-uri: https://issuer.example.bank/realms/prodops-control-tower
+      jwk-set-uri: https://issuer.example.bank/realms/prodops-control-tower/protocol/openid-connect/certs
+      audience: prodops-control-tower-mcp
+      required-scope: prodops.read
+    fixture:
+      base-path: fixtures
+      scenarios:
+        - scenario_payments_rollout_regression
+        - scenario_upi_recon_saturation
+        - scenario_tradex_alert_storm
+    clusters:
+      - name: bank-uat
+        environment: UAT
+        enabled: true
+        namespace-allowlist:
+          - payments-uat
+          - upi-ops
+          - tradex-edge
+        team-label-key: owner-team
+        criticality-label-key: criticality
+        kubernetes:
+          in-cluster: false
+          kubeconfig: /path/to/kubeconfig
+          context: bank-uat
+          logs-enabled: true
+        prometheus:
+          base-url: https://prometheus.uat.example.bank
+          bearer-token-ref: PROMETHEUS_BEARER_TOKEN
+          timeout: PT30S
+        grafana:
+          base-url: https://grafana.uat.example.bank
+          bearer-token-ref: GRAFANA_BEARER_TOKEN
+          default-folder: ProdOps
+          timeout: PT30S
