@@ -40,8 +40,8 @@ prodops:
     security:
       jwt-enabled: false
       allow-anonymous-local-http: true
-      issuer-uri: https://issuer.example.bank/realms/prodops-control-tower
-      jwk-set-uri: https://issuer.example.bank/realms/prodops-control-tower/protocol/openid-connect/certs
+      issuer-uri: https://issuer.example.internal/realms/prodops-control-tower
+      jwk-set-uri: https://issuer.example.internal/realms/prodops-control-tower/protocol/openid-connect/certs
       audience: prodops-control-tower-mcp
       required-scope: prodops.read
     fixture:
@@ -51,7 +51,7 @@ prodops:
         - scenario_upi_recon_saturation
         - scenario_tradex_alert_storm
     clusters:
-      - name: bank-uat
+      - name: prodops-uat
         environment: UAT
         enabled: true
         namespace-allowlist:
@@ -63,14 +63,14 @@ prodops:
         kubernetes:
           in-cluster: false
           kubeconfig: /path/to/kubeconfig
-          context: bank-uat
+          context: prodops-uat
           logs-enabled: true
         prometheus:
-          base-url: https://prometheus.uat.example.bank
+          base-url: https://prometheus.uat.example.internal
           bearer-token-ref: PROMETHEUS_BEARER_TOKEN
           timeout: PT30S
         grafana:
-          base-url: https://grafana.uat.example.bank
+          base-url: https://grafana.uat.example.internal
           bearer-token-ref: GRAFANA_BEARER_TOKEN
           default-folder: ProdOps
           timeout: PT30S

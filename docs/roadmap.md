@@ -22,8 +22,8 @@ This repository is intentionally limited to one product domain: Production Suppo
 
 ### Phase 3
 
-- Pattern reuse for adjacent bank systems using the same MCP delivery model
-- Shared policy, audit, and deployment standards across bank MCP servers
+- Pattern reuse for adjacent enterprise systems using the same MCP delivery model
+- Shared policy, audit, and deployment standards across enterprise MCP servers
 - Reusable fixture kits for regulated change review and model evaluation
 
 ## How this generalizes without widening scope now
@@ -36,4 +36,4 @@ The reusable parts are the engineering pattern, not the current domain boundary:
 - fixture mode and CI pattern
 - deployment, observability, and audit conventions
 
-Future bank MCP servers should reuse the pattern while keeping each server domain-specific and governable.
+Future enterprise MCP servers should reuse the pattern while keeping each server domain-specific and governable.

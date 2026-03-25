@@ -1,7 +1,7 @@
 services:
   - serviceId: payments-api
     displayName: Payments API
-    cluster: bank-uat
+    cluster: prodops-uat
     namespace: payments-uat
     workloadName: payments-api
     workloadKind: DEPLOYMENT
@@ -20,7 +20,7 @@ services:
         threshold: 0.1% errors
         measurementWindow: 30d
     runbookLinks:
-      - https://runbooks.example.bank/payments-api
+      - https://runbooks.example.internal/payments-api
     promqlTemplates:
       error_rate: clamp_max(0.82,1)
       latency: clamp_max(0.91,1)
@@ -30,7 +30,7 @@ services:
       saturation: clamp_max(0.68,1)
   - serviceId: upi-recon
     displayName: UPI Reconciliation
-    cluster: bank-uat
+    cluster: prodops-uat
     namespace: upi-ops
     workloadName: upi-recon
     workloadKind: DEPLOYMENT
@@ -45,7 +45,7 @@ services:
         threshold: 1500ms
         measurementWindow: 30d
     runbookLinks:
-      - https://runbooks.example.bank/upi-recon
+      - https://runbooks.example.internal/upi-recon
     promqlTemplates:
       error_rate: clamp_max(0.24,1)
       latency: clamp_max(0.86,1)
@@ -55,7 +55,7 @@ services:
       saturation: clamp_max(0.89,1)
   - serviceId: tradex-gateway
     displayName: Tradex Gateway
-    cluster: bank-uat
+    cluster: prodops-uat
     namespace: tradex-edge
     workloadName: tradex-gateway
     workloadKind: DEPLOYMENT
@@ -70,7 +70,7 @@ services:
         threshold: 0.5% errors
         measurementWindow: 30d
     runbookLinks:
-      - https://runbooks.example.bank/tradex-gateway
+      - https://runbooks.example.internal/tradex-gateway
     promqlTemplates:
       error_rate: clamp_max(0.28,1)
       latency: clamp_max(0.33,1)

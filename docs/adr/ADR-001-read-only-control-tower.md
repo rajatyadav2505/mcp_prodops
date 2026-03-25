@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-The bank needs an MCP server that can support AI-assisted ProdOps workflows without creating a mutation path into production systems.
+The enterprise needs an MCP server that can support AI-assisted ProdOps workflows without creating a mutation path into production systems.
 
 ## Decision
 

@@ -14,14 +14,14 @@ rbac:
 
 config:
   springProfilesActive: live,http
-  publicBaseUrl: https://prodops-control-tower-mcp.uat.example.bank
+  publicBaseUrl: https://prodops-control-tower-mcp.uat.example.internal
   jwtEnabled: true
-  jwtIssuerUri: https://issuer.example.bank/realms/prodops-control-tower
-  jwtJwksUri: https://issuer.example.bank/realms/prodops-control-tower/protocol/openid-connect/certs
+  jwtIssuerUri: https://issuer.example.internal/realms/prodops-control-tower
+  jwtJwksUri: https://issuer.example.internal/realms/prodops-control-tower/protocol/openid-connect/certs
   jwtAudience: prodops-control-tower-mcp
   requiredScope: prodops.read
-  prometheusBaseUrl: https://prometheus.uat.example.bank
-  grafanaBaseUrl: https://grafana.uat.example.bank
+  prometheusBaseUrl: https://prometheus.uat.example.internal
+  grafanaBaseUrl: https://grafana.uat.example.internal
 
 secretRefs:
   name: prodops-control-tower-mcp-upstream
@@ -42,7 +42,7 @@ resources:
 ingress:
   enabled: false
   className: nginx
-  host: prodops-control-tower-mcp.uat.example.bank
+  host: prodops-control-tower-mcp.uat.example.internal
 
 hpa:
   enabled: true

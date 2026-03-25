@@ -1,6 +1,6 @@
 {
   "cluster": {
-    "name": "bank-uat",
+    "name": "prodops-uat",
     "environment": "UAT",
     "kubernetesVersion": "1.30.2",
     "region": "in-west-1",
@@ -10,7 +10,7 @@
   },
   "namespaces": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "name": "tradex-edge",
       "labels": {
         "owner-team": "tradex",
@@ -23,7 +23,7 @@
   ],
   "workloads": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "tradex-edge",
       "name": "tradex-gateway",
       "kind": "DEPLOYMENT",
@@ -44,7 +44,7 @@
   ],
   "pods": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "tradex-edge",
       "name": "tradex-gateway-56b9dbb7d4-1a2bc",
       "phase": "Running",
@@ -54,7 +54,7 @@
       "lastTerminationReason": "Completed",
       "createdAt": "2026-03-25T07:01:00Z",
       "ownerReference": {
-        "cluster": "bank-uat",
+        "cluster": "prodops-uat",
         "namespace": "tradex-edge",
         "kind": "Deployment",
         "name": "tradex-gateway"
@@ -63,7 +63,7 @@
   ],
   "warningEvents": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "tradex-edge",
       "reason": "SyntheticMonitorTransientFailure",
       "message": "Upstream synthetic monitor retries triggered transient warning bursts.",
@@ -76,7 +76,7 @@
   ],
   "services": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "tradex-edge",
       "name": "tradex-gateway",
       "type": "ClusterIP",
@@ -87,16 +87,16 @@
   ],
   "ingresses": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "tradex-edge",
       "name": "tradex-public",
-      "hosts": ["tradex-uat.example.bank"],
+      "hosts": ["tradex-uat.example.internal"],
       "backendServices": ["tradex-gateway"]
     }
   ],
   "hpas": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "tradex-edge",
       "name": "tradex-gateway",
       "minReplicas": 2,
@@ -107,7 +107,7 @@
   ],
   "pdbs": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "tradex-edge",
       "name": "tradex-gateway",
       "minAvailable": "3",
@@ -117,12 +117,12 @@
   ],
   "dashboards": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "uid": "tradex-alert-storm",
       "title": "Tradex Gateway Alert Triage",
       "folder": "ProdOps",
       "tags": ["tradex", "noise", "uat"],
-      "url": "https://grafana.example.bank/d/tradex-alert-storm/tradex-gateway",
+      "url": "https://grafana.example.internal/d/tradex-alert-storm/tradex-gateway",
       "panels": [
         {
           "title": "Alert Volume",
@@ -136,7 +136,7 @@
   ],
   "metrics": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "tradex-edge",
       "scope": "tradex-gateway",
       "goldenSignals": [

@@ -7,7 +7,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
 spec:
   rules:
-    - host: prodops-control-tower-mcp.uat.example.bank
+    - host: prodops-control-tower-mcp.uat.example.internal
       http:
         paths:
           - path: /mcp

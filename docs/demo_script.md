@@ -19,7 +19,7 @@ Demonstrate that `ProdOps Control Tower MCP` is a real control-tower server that
    Value shown: discoverability and scope governance
 
 2. Prompt: `Show me the workloads in payments-uat.`
-   Tools/resources: `list_workloads`, `prodops://cluster/bank-uat/namespace/payments-uat/workloads`
+   Tools/resources: `list_workloads`, `prodops://cluster/prodops-uat/namespace/payments-uat/workloads`
    Value shown: runtime inventory without kubectl
 
 3. Prompt: `Why is payments-api unhealthy in UAT right now?`

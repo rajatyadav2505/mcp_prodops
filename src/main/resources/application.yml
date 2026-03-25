@@ -88,7 +88,7 @@ prodops:
         - scenario_upi_recon_saturation
         - scenario_tradex_alert_storm
     clusters:
-      - name: bank-uat
+      - name: prodops-uat
         environment: UAT
         enabled: true
         namespace-allowlist: []

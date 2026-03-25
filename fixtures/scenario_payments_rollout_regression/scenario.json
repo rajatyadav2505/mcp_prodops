@@ -1,6 +1,6 @@
 {
   "cluster": {
-    "name": "bank-uat",
+    "name": "prodops-uat",
     "environment": "UAT",
     "kubernetesVersion": "1.30.2",
     "region": "in-west-1",
@@ -10,7 +10,7 @@
   },
   "namespaces": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "name": "payments-uat",
       "labels": {
         "owner-team": "cards-platform",
@@ -23,7 +23,7 @@
   ],
   "workloads": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "payments-uat",
       "name": "payments-api",
       "kind": "DEPLOYMENT",
@@ -44,7 +44,7 @@
   ],
   "pods": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "payments-uat",
       "name": "payments-api-74c6d85d97-2g4jk",
       "phase": "Running",
@@ -54,14 +54,14 @@
       "lastTerminationReason": "none",
       "createdAt": "2026-03-25T10:11:00Z",
       "ownerReference": {
-        "cluster": "bank-uat",
+        "cluster": "prodops-uat",
         "namespace": "payments-uat",
         "kind": "Deployment",
         "name": "payments-api"
       }
     },
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "payments-uat",
       "name": "payments-api-74c6d85d97-5r9vq",
       "phase": "CrashLoopBackOff",
@@ -71,7 +71,7 @@
       "lastTerminationReason": "Error",
       "createdAt": "2026-03-25T10:11:00Z",
       "ownerReference": {
-        "cluster": "bank-uat",
+        "cluster": "prodops-uat",
         "namespace": "payments-uat",
         "kind": "Deployment",
         "name": "payments-api"
@@ -80,7 +80,7 @@
   ],
   "warningEvents": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "payments-uat",
       "reason": "BackOff",
       "message": "Back-off restarting failed container app in pod payments-api-74c6d85d97-5r9vq",
@@ -91,7 +91,7 @@
       "lastTimestamp": "2026-03-25T10:28:00Z"
     },
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "payments-uat",
       "reason": "ProgressDeadlineExceeded",
       "message": "Deployment payments-api exceeded its progress deadline after revision 112 rolled out.",
@@ -104,7 +104,7 @@
   ],
   "services": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "payments-uat",
       "name": "payments-api",
       "type": "ClusterIP",
@@ -115,16 +115,16 @@
   ],
   "ingresses": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "payments-uat",
       "name": "payments-public",
-      "hosts": ["payments-uat.example.bank"],
+      "hosts": ["payments-uat.example.internal"],
       "backendServices": ["payments-api"]
     }
   ],
   "hpas": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "payments-uat",
       "name": "payments-api",
       "minReplicas": 2,
@@ -135,7 +135,7 @@
   ],
   "pdbs": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "payments-uat",
       "name": "payments-api",
       "minAvailable": "2",
@@ -145,12 +145,12 @@
   ],
   "dashboards": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "uid": "payments-latency",
       "title": "Payments API Golden Signals",
       "folder": "ProdOps",
       "tags": ["payments", "latency", "uat"],
-      "url": "https://grafana.example.bank/d/payments-latency/payments-api",
+      "url": "https://grafana.example.internal/d/payments-latency/payments-api",
       "panels": [
         {
           "title": "Error Rate",
@@ -164,7 +164,7 @@
   ],
   "metrics": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "payments-uat",
       "scope": "payments-api",
       "goldenSignals": [

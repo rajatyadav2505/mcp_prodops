@@ -1,6 +1,6 @@
 # ProdOps Control Tower MCP
 
-`prodops-control-tower-mcp` is a production-grade, read-only Model Context Protocol server for Bank's Production Support Intelligence domain. It turns Kubernetes into the runtime truth plane, Prometheus into the metrics truth plane, and Grafana into the visualization and evidence plane, then exposes that unified operational context to external AI clients over MCP.
+`prodops-control-tower-mcp` is a production-grade, read-only Model Context Protocol server for the Production Support Intelligence domain in enterprise environments. It turns Kubernetes into the runtime truth plane, Prometheus into the metrics truth plane, and Grafana into the visualization and evidence plane, then exposes that unified operational context to external AI clients over MCP.
 
 This server is intentionally deterministic. It does not embed a chat model and it does not make external LLM calls. Its intelligence comes from weighted scoring, timeline correlation, topology inference, bounded PromQL access, explicit evidence packs, and transparent confidence calculation.
 
@@ -9,13 +9,13 @@ This server is intentionally deterministic. It does not embed a chat model and i
 - Lower MTTR by giving support engineers one MCP endpoint for workload state, metrics, dashboards, and cross-plane reasoning.
 - Safer chat-based operations by enforcing a hard read-only contract, policy guardrails, redaction, rate limiting, and scope control.
 - Better management visibility by returning both `operator_summary` and `executive_summary` for flagship tools.
-- Reusable bank pattern by proving how one MCP server can be productionized with security, observability, CI, deployment manifests, fixtures, and governance.
+- Reusable enterprise pattern by proving how one MCP server can be productionized with security, observability, CI, deployment manifests, fixtures, and governance.
 
 ## Product posture
 
 - Product name: `ProdOps Control Tower MCP`
 - Artifact name: `prodops-control-tower-mcp`
-- Base package: `com.idfcfirstbank.prodops.controltower.mcp`
+- Base package: `com.prodops.controltower.mcp`
 - Domain: `Production Support Intelligence`
 - Transports: remote HTTP at `/mcp`, optional stdio for local clients
 - Runtime: Java 21, Spring Boot 3, Spring AI MCP, Spring MVC
@@ -27,7 +27,7 @@ This server is intentionally deterministic. It does not embed a chat model and i
 
 ```mermaid
 flowchart LR
-    Client["External AI Client\nClaude Code / MCP Inspector / Bank model"] --> MCP["Spring AI MCP Layer\nTools / Resources / Prompts"]
+    Client["External AI Client\nClaude Code / MCP Inspector / Enterprise AI model"] --> MCP["Spring AI MCP Layer\nTools / Resources / Prompts"]
     MCP --> Services["Domain Services\nInventory / Observability / Intelligence / Resource / Prompt"]
     Services --> Policy["Policy + Guardrails\nScope / Rate limit / Origin / JWT / Redaction / Audit"]
     Services --> Ports["Typed Ports"]
@@ -146,7 +146,7 @@ java -jar target/prodops-control-tower-mcp-0.1.0-SNAPSHOT.jar
 - `scenario_upi_recon_saturation`
 - `scenario_tradex_alert_storm`
 
-These scenarios are rich enough for incident correlation, change-causality, blast radius, and capacity-risk workflows without contacting any bank system.
+These scenarios are rich enough for incident correlation, change-causality, blast radius, and capacity-risk workflows without contacting any enterprise system.
 
 ## Live-mode configuration
 

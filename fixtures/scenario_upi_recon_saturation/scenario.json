@@ -1,6 +1,6 @@
 {
   "cluster": {
-    "name": "bank-uat",
+    "name": "prodops-uat",
     "environment": "UAT",
     "kubernetesVersion": "1.30.2",
     "region": "in-west-1",
@@ -10,7 +10,7 @@
   },
   "namespaces": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "name": "upi-ops",
       "labels": {
         "owner-team": "recon-engineering",
@@ -23,7 +23,7 @@
   ],
   "workloads": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "upi-ops",
       "name": "upi-recon",
       "kind": "DEPLOYMENT",
@@ -44,7 +44,7 @@
   ],
   "pods": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "upi-ops",
       "name": "upi-recon-6d9f67f546-4nb9q",
       "phase": "Running",
@@ -54,7 +54,7 @@
       "lastTerminationReason": "none",
       "createdAt": "2026-03-25T08:02:00Z",
       "ownerReference": {
-        "cluster": "bank-uat",
+        "cluster": "prodops-uat",
         "namespace": "upi-ops",
         "kind": "Deployment",
         "name": "upi-recon"
@@ -63,7 +63,7 @@
   ],
   "warningEvents": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "upi-ops",
       "reason": "FailedGetResourceMetric",
       "message": "HPA lagged because target CPU metrics remained stale during traffic burst.",
@@ -76,7 +76,7 @@
   ],
   "services": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "upi-ops",
       "name": "upi-recon",
       "type": "ClusterIP",
@@ -88,7 +88,7 @@
   "ingresses": [],
   "hpas": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "upi-ops",
       "name": "upi-recon",
       "minReplicas": 2,
@@ -99,7 +99,7 @@
   ],
   "pdbs": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "upi-ops",
       "name": "upi-recon",
       "minAvailable": "2",
@@ -109,12 +109,12 @@
   ],
   "dashboards": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "uid": "upi-recon-saturation",
       "title": "UPI Recon Saturation",
       "folder": "ProdOps",
       "tags": ["upi", "capacity", "uat"],
-      "url": "https://grafana.example.bank/d/upi-recon-saturation/upi-recon",
+      "url": "https://grafana.example.internal/d/upi-recon-saturation/upi-recon",
       "panels": [
         {
           "title": "CPU Saturation",
@@ -128,7 +128,7 @@
   ],
   "metrics": [
     {
-      "cluster": "bank-uat",
+      "cluster": "prodops-uat",
       "namespace": "upi-ops",
       "scope": "upi-recon",
       "goldenSignals": [

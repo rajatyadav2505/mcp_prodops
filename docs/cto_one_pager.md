@@ -2,7 +2,7 @@
 
 ## What it is
 
-`ProdOps Control Tower MCP` is a productionizable MCP server that exposes Production Support Intelligence from Kubernetes, Prometheus, and Grafana to approved AI clients. It gives the bank a safe bridge between chat-based AI workflows and authoritative operational systems without embedding an LLM inside the server.
+`ProdOps Control Tower MCP` is a productionizable MCP server that exposes Production Support Intelligence from Kubernetes, Prometheus, and Grafana to approved AI clients. It gives the enterprise a safe bridge between chat-based AI workflows and authoritative operational systems without embedding an LLM inside the server.
 
 ## Why it matters
 
@@ -37,6 +37,6 @@
 5. Review audit logs, performance, and evidence quality before widening coverage.
 6. Productionize with platform-managed identity, secret delivery, and network restrictions.
 
-## Why it generalizes inside the bank
+## Why it generalizes inside the enterprise
 
 This repository establishes a reusable pattern: one domain-specific MCP server, typed schemas, clear safety contract, ports-and-adapters design, fixture mode for CI, and production-grade governance. The same delivery pattern can later be reused for payments operations, middleware, data platforms, or internal observability estates without widening this server's current scope.

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repository builds `prodops-control-tower-mcp`, a Java 21 Spring Boot MCP server for Production Support Intelligence. Treat it as a bank-grade, read-only operational system, not a demo.
+This repository builds `prodops-control-tower-mcp`, a Java 21 Spring Boot MCP server for Production Support Intelligence. Treat it as a production-grade, read-only operational system, not a demo.
 
 ## Product rules
 

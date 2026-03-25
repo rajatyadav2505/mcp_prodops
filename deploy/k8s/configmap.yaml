@@ -7,15 +7,15 @@ data:
   PRODOPS_BIND_ADDRESS: 0.0.0.0
   PORT: "8080"
   MANAGEMENT_PORT: "8081"
-  PRODOPS_PUBLIC_BASE_URL: https://prodops-control-tower-mcp.uat.example.bank
+  PRODOPS_PUBLIC_BASE_URL: https://prodops-control-tower-mcp.uat.example.internal
   PRODOPS_JWT_ENABLED: "true"
-  PRODOPS_JWT_ISSUER_URI: https://issuer.example.bank/realms/prodops-control-tower
-  PRODOPS_JWT_JWKS_URI: https://issuer.example.bank/realms/prodops-control-tower/protocol/openid-connect/certs
+  PRODOPS_JWT_ISSUER_URI: https://issuer.example.internal/realms/prodops-control-tower
+  PRODOPS_JWT_JWKS_URI: https://issuer.example.internal/realms/prodops-control-tower/protocol/openid-connect/certs
   PRODOPS_JWT_AUDIENCE: prodops-control-tower-mcp
   PRODOPS_REQUIRED_SCOPE: prodops.read
   PRODOPS_PRODOPS_CLUSTERS_0_KUBERNETES_IN_CLUSTER: "true"
   PRODOPS_PRODOPS_CLUSTERS_0_NAMESPACE_ALLOWLIST_0: payments-uat
   PRODOPS_PRODOPS_CLUSTERS_0_NAMESPACE_ALLOWLIST_1: upi-ops
   PRODOPS_PRODOPS_CLUSTERS_0_NAMESPACE_ALLOWLIST_2: tradex-edge
-  PROMETHEUS_BASE_URL: https://prometheus.uat.example.bank
-  GRAFANA_BASE_URL: https://grafana.uat.example.bank
+  PROMETHEUS_BASE_URL: https://prometheus.uat.example.internal
+  GRAFANA_BASE_URL: https://grafana.uat.example.internal
