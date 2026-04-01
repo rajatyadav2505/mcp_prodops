@@ -8,6 +8,14 @@ memoryPressureWeight: 9
 unavailableReplicaWeight: 13
 dependencyUncertaintyWeight: 7
 noiseWeight: 7
+changeRecencyWeight: 12
+fileAffinityWeight: 10
+pipelineFailureWeight: 11
+logSignatureNoveltyWeight: 9
+traceFailureAlignmentWeight: 12
+dependencyPropagationWeight: 9
+evidenceConflictPenalty: 8
+uncertaintyPenalty: 10
 moderateThreshold: 35
 highThreshold: 60
 criticalThreshold: 80

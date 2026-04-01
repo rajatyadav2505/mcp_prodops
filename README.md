@@ -1,6 +1,6 @@
 # ProdOps Control Tower MCP
 
-`prodops-control-tower-mcp` is a production-grade, read-only Model Context Protocol server for the Production Support Intelligence domain in enterprise environments. It turns Kubernetes into the runtime truth plane, Prometheus into the metrics truth plane, and Grafana into the visualization and evidence plane, then exposes that unified operational context to external AI clients over MCP.
+`prodops-control-tower-mcp` is a production-grade, read-only Model Context Protocol server for the Production Support Intelligence domain in enterprise environments. It turns Kubernetes into the runtime truth plane, Prometheus into the metrics truth plane, Grafana into the visualization plane, Bitbucket into the change plane, Kibana into the log plane, and Jaeger into the trace plane, then exposes that unified operational context to external AI clients over MCP.
 
 This server is intentionally deterministic. It does not embed a chat model and it does not make external LLM calls. Its intelligence comes from weighted scoring, timeline correlation, topology inference, bounded PromQL access, explicit evidence packs, and transparent confidence calculation.
 
@@ -9,6 +9,7 @@ This server is intentionally deterministic. It does not embed a chat model and i
 - Lower MTTR by giving support engineers one MCP endpoint for workload state, metrics, dashboards, and cross-plane reasoning.
 - Safer chat-based operations by enforcing a hard read-only contract, policy guardrails, redaction, rate limiting, and scope control.
 - Better management visibility by returning both `operator_summary` and `executive_summary` for flagship tools.
+- Stronger root-cause analysis by explaining what broke, which change is the leading suspect, why it is suspected, what evidence supports or weakens that view, and which alternate suspects remain.
 - Reusable enterprise pattern by proving how one MCP server can be productionized with security, observability, CI, deployment manifests, fixtures, and governance.
 
 ## Product posture
@@ -19,7 +20,7 @@ This server is intentionally deterministic. It does not embed a chat model and i
 - Domain: `Production Support Intelligence`
 - Transports: remote HTTP at `/mcp`, optional stdio for local clients
 - Runtime: Java 21, Spring Boot 3, Spring AI MCP, Spring MVC
-- Upstreams: Kubernetes API, Prometheus HTTP API, Grafana HTTP API
+- Upstreams: Kubernetes API, Prometheus HTTP API, Grafana HTTP API, Bitbucket HTTP API, Kibana log search or Elasticsearch-compatible query API, Jaeger HTTP API
 - Mode support: curated service-catalog mode and generic discovery mode
 - Safety stance: read-only only, no Secret reads, no mutating upstream actions
 
@@ -34,10 +35,16 @@ flowchart LR
     Ports --> K8s["Kubernetes Adapter"]
     Ports --> Prom["Prometheus Adapter"]
     Ports --> Graf["Grafana Adapter"]
+    Ports --> Bitbucket["Bitbucket Adapter"]
+    Ports --> Kibana["Kibana Adapter"]
+    Ports --> Jaeger["Jaeger Adapter"]
     Ports --> Catalog["Service Catalog + Risk Weights"]
     K8s --> Runtime["Kubernetes truth plane"]
     Prom --> Metrics["Prometheus truth plane"]
     Graf --> Evidence["Grafana evidence plane"]
+    Bitbucket --> Changes["Bitbucket change plane"]
+    Kibana --> Logs["Kibana log plane"]
+    Jaeger --> Traces["Jaeger trace plane"]
 ```
 
 ## Key capabilities
@@ -59,11 +66,23 @@ flowchart LR
 - `search_dashboards`
 - `get_dashboard_summary`
 
+### Log and trace intelligence
+
+- `search_kibana_logs`
+- `summarize_kibana_errors`
+- `search_jaeger_traces`
+- `get_jaeger_trace_summary`
+
 ### Flagship intelligence
 
 - `correlate_service_incident`
 - `estimate_blast_radius`
 - `get_change_correlation`
+- `get_root_cause_analysis`
+- `get_change_regression_attribution`
+- `compare_change_impact`
+- `find_similar_incidents`
+- `get_observability_coverage_gaps`
 - `forecast_capacity_risk`
 
 Every flagship tool returns structured evidence, confidence, links, limitations, and freshness metadata.
@@ -145,8 +164,10 @@ java -jar target/prodops-control-tower-mcp-0.1.0-SNAPSHOT.jar
 - `scenario_payments_rollout_regression`
 - `scenario_upi_recon_saturation`
 - `scenario_tradex_alert_storm`
+- `scenario_checkout_dependency_regression`
+- `scenario_ledger_observability_gap`
 
-These scenarios are rich enough for incident correlation, change-causality, blast radius, and capacity-risk workflows without contacting any enterprise system.
+These scenarios cover a true change-caused regression, a recent-but-innocent change where a dependency fails first, and a low-confidence case that surfaces observability gaps without over-claiming causality. Additional deterministic root-cause scenarios can be added in fixture mode without changing the tool surface.
 
 ## Live-mode configuration
 
@@ -154,7 +175,7 @@ These scenarios are rich enough for incident correlation, change-causality, blas
 2. Add curated services in [config/service-catalog.example.yaml](/Users/rajatyadav/MCP ProdOps/config/service-catalog.example.yaml).
 3. Adjust scoring in [config/risk-weights.example.yaml](/Users/rajatyadav/MCP ProdOps/config/risk-weights.example.yaml).
 4. Set `SPRING_PROFILES_ACTIVE=live,http`.
-5. Provide upstream base URLs and token environment variables.
+5. Provide upstream base URLs and token environment variables for Kubernetes, Prometheus, Grafana, Bitbucket, Kibana, and Jaeger.
 6. Apply the sample RBAC and network policy from [deploy/k8s](/Users/rajatyadav/MCP ProdOps/deploy/k8s).
 
 Live integrations are read-only only. The server does not pass client tokens downstream.
@@ -195,6 +216,12 @@ Then connect the inspector to `http://127.0.0.1:8080/mcp`.
 - Why is `payments-api` unhealthy in UAT right now?
 - Which namespaces show the highest operational risk in the last 60 minutes?
 - Did the latest rollout correlate with the latency spike in `upi-recon`?
+- Which Bitbucket change most likely broke `payments-api` in the last 60 minutes?
+- Show the top Kibana error signatures for `upi-recon` and correlate them with Jaeger traces.
+- Did a recent PR cause the latency spike, or is this a downstream dependency issue?
+- Compare the impact before and after commit `XYZ` on `tradex-gateway`.
+- Find similar incidents to the current outage.
+- Where are our observability blind spots for root cause attribution?
 - What is the likely blast radius if `tradex-gateway` keeps failing?
 - Which critical services are closest to SLO risk today?
 - Give me a CTO summary of the top five production risks in the last 24 hours.

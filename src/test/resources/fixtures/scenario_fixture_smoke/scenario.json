@@ -31,7 +31,8 @@
       "labels": {
         "app": "payments-api",
         "owner-team": "payments-platform",
-        "criticality": "critical"
+        "criticality": "critical",
+        "app.kubernetes.io/version": "3b2f1a9"
       },
       "selector": {
         "app": "payments-api"
@@ -228,6 +229,246 @@
       "truncated": false
     }
   ],
+  "bitbucketChanges": [
+    {
+      "changeId": "3b2f1a9",
+      "serviceId": "payments-api",
+      "workspace": "prodops",
+      "repoSlug": "payments-api",
+      "projectKey": "PAY",
+      "commitSha": "3b2f1a9f5ad2c8d1ef0f9b0f7e9a3de10caa100",
+      "branch": "main",
+      "title": "Tighten settlement validation before startup",
+      "description": "Introduced stricter startup validation for settlement route schema loading.",
+      "labels": ["release-2026.03.24", "payments"],
+      "changedFiles": [
+        "services/payments-api/src/main/java/com/prodops/payments/StartupValidator.java",
+        "services/payments-api/src/main/resources/settlement-routes.yaml"
+      ],
+      "author": "alice",
+      "reviewers": ["bob", "carol"],
+      "committedAt": "2026-03-24T23:20:00Z",
+      "mergedAt": "2026-03-24T23:24:00Z",
+      "pullRequest": {
+        "pullRequestId": "128",
+        "title": "Tighten settlement validation before startup",
+        "description": "Introduced stricter startup validation for settlement route schema loading.",
+        "sourceBranch": "feature/settlement-validator",
+        "destinationBranch": "main",
+        "author": "alice",
+        "reviewers": ["bob", "carol"],
+        "labels": ["release-2026.03.24", "payments"],
+        "createdAt": "2026-03-24T22:50:00Z",
+        "updatedAt": "2026-03-24T23:24:00Z",
+        "mergedAt": "2026-03-24T23:24:00Z",
+        "deepLink": {
+          "label": "Bitbucket PR #128",
+          "source": "BITBUCKET",
+          "url": "https://bitbucket.example.invalid/projects/PAY/repos/payments-api/pull-requests/128",
+          "description": "Open PR 128"
+        }
+      },
+      "pipelineRuns": [
+        {
+          "pipelineId": "pipe-128",
+          "state": "COMPLETED",
+          "result": "FAILED",
+          "targetBranch": "main",
+          "targetCommit": "3b2f1a9f5ad2c8d1ef0f9b0f7e9a3de10caa100",
+          "deployment": true,
+          "createdAt": "2026-03-24T23:25:00Z",
+          "completedAt": "2026-03-24T23:28:00Z",
+          "deepLink": {
+            "label": "Bitbucket pipeline 9128",
+            "source": "BITBUCKET",
+            "url": "https://bitbucket.example.invalid/projects/PAY/repos/payments-api/pipelines/9128",
+            "description": "Open pipeline 9128"
+          }
+        }
+      ],
+      "deepLinks": [
+        {
+          "label": "Bitbucket commit 3b2f1a9",
+          "source": "BITBUCKET",
+          "url": "https://bitbucket.example.invalid/projects/PAY/repos/payments-api/commits/3b2f1a9f5ad2c8d1ef0f9b0f7e9a3de10caa100",
+          "description": "Open commit 3b2f1a9"
+        }
+      ]
+    },
+    {
+      "changeId": "9c7d2ef",
+      "serviceId": "payments-api",
+      "workspace": "prodops",
+      "repoSlug": "payments-api",
+      "projectKey": "PAY",
+      "commitSha": "9c7d2ef0000c8d1ef0f9b0f7e9a3de10caa200",
+      "branch": "main",
+      "title": "Refactor payments metrics labels",
+      "description": "Metrics label cleanup only.",
+      "labels": ["payments"],
+      "changedFiles": [
+        "services/payments-api/src/main/java/com/prodops/payments/MetricsConfig.java"
+      ],
+      "author": "dan",
+      "reviewers": ["erin"],
+      "committedAt": "2026-03-24T20:15:00Z",
+      "mergedAt": "2026-03-24T20:21:00Z",
+      "pullRequest": null,
+      "pipelineRuns": [],
+      "deepLinks": [
+        {
+          "label": "Bitbucket commit 9c7d2ef",
+          "source": "BITBUCKET",
+          "url": "https://bitbucket.example.invalid/projects/PAY/repos/payments-api/commits/9c7d2ef0000c8d1ef0f9b0f7e9a3de10caa200",
+          "description": "Open commit 9c7d2ef"
+        }
+      ]
+    }
+  ],
+  "kibanaLogs": [
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "serviceOrWorkload": "payments-api",
+      "podName": "payments-api-7d4f6f7c6d-abc12",
+      "container": "app",
+      "severity": "ERROR",
+      "message": "IllegalStateException: settlement route schema is incompatible with release 3b2f1a9",
+      "sanitizedMessage": "IllegalStateException: settlement route schema is incompatible with release 3b2f1a9",
+      "exceptionSignature": "IllegalStateException: settlement route schema is incompatible",
+      "traceId": "trace-pay-1",
+      "requestId": "req-pay-1",
+      "versionTag": "3b2f1a9",
+      "observedAt": "2026-03-24T23:43:00Z",
+      "deepLink": {
+        "label": "Kibana payments-api errors",
+        "source": "KIBANA",
+        "url": "https://kibana.example.invalid/app/discover#/view/payments-api-errors",
+        "description": "Open Kibana discover view"
+      }
+    },
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "serviceOrWorkload": "payments-api",
+      "podName": "payments-api-7d4f6f7c6d-abc12",
+      "container": "app",
+      "severity": "ERROR",
+      "message": "StartupValidator failed to bind settlement route for release 3b2f1a9",
+      "sanitizedMessage": "StartupValidator failed to bind settlement route for release 3b2f1a9",
+      "exceptionSignature": "StartupValidator failed to bind settlement route",
+      "traceId": "trace-pay-2",
+      "requestId": "req-pay-2",
+      "versionTag": "3b2f1a9",
+      "observedAt": "2026-03-24T23:47:00Z",
+      "deepLink": {
+        "label": "Kibana payments-api errors",
+        "source": "KIBANA",
+        "url": "https://kibana.example.invalid/app/discover#/view/payments-api-errors",
+        "description": "Open Kibana discover view"
+      }
+    }
+  ],
+  "traces": [
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "serviceOrWorkload": "payments-api",
+      "traces": [
+        {
+          "traceId": "trace-pay-1",
+          "rootService": "payments-api",
+          "operation": "POST /payments",
+          "startTime": "2026-03-24T23:42:30Z",
+          "duration": "PT0.620S",
+          "error": true,
+          "firstFailingService": "payments-api",
+          "firstFailingSpan": "StartupValidator.loadRoutes",
+          "criticalPathDuration": "PT0.480S",
+          "errorSpans": [
+            {
+              "spanId": "span-pay-1",
+              "parentSpanId": null,
+              "serviceName": "payments-api",
+              "operation": "StartupValidator.loadRoutes",
+              "startTime": "2026-03-24T23:42:30Z",
+              "duration": "PT0.480S",
+              "error": true,
+              "retry": false,
+              "podName": "payments-api-7d4f6f7c6d-abc12",
+              "versionTag": "3b2f1a9",
+              "tags": {
+                "service.version": "3b2f1a9",
+                "k8s.pod.name": "payments-api-7d4f6f7c6d-abc12"
+              }
+            }
+          ],
+          "latencyHotspots": [
+            {
+              "spanId": "span-pay-1",
+              "parentSpanId": null,
+              "serviceName": "payments-api",
+              "operation": "StartupValidator.loadRoutes",
+              "startTime": "2026-03-24T23:42:30Z",
+              "duration": "PT0.480S",
+              "error": true,
+              "retry": false,
+              "podName": "payments-api-7d4f6f7c6d-abc12",
+              "versionTag": "3b2f1a9",
+              "tags": {
+                "service.version": "3b2f1a9"
+              }
+            }
+          ],
+          "dependencyEdges": [
+            {
+              "sourceService": "payments-api",
+              "targetService": "payments-ledger",
+              "latency": "PT0.060S",
+              "error": false
+            }
+          ],
+          "deepLink": {
+            "label": "Jaeger trace trace-pay-1",
+            "source": "JAEGER",
+            "url": "https://jaeger.example.invalid/trace/trace-pay-1",
+            "description": "Open trace trace-pay-1"
+          },
+          "versionTag": "3b2f1a9",
+          "podName": "payments-api-7d4f6f7c6d-abc12"
+        }
+      ]
+    }
+  ],
+  "historicalIncidents": [
+    {
+      "incidentId": "inc-pay-20260214",
+      "title": "Payments startup validator regression",
+      "occurredAt": "2026-02-14T11:15:00Z",
+      "serviceId": "payments-api",
+      "causeType": "CHANGE_REGRESSION",
+      "fingerprint": {
+        "metricOnsetPattern": "error_rate_ratio:high,latency_slo_ratio:moderate",
+        "topLogSignatures": [
+          "IllegalStateException: settlement route schema is incompatible",
+          "StartupValidator failed to bind settlement route"
+        ],
+        "spanErrorSignature": "payments-api/StartupValidator.loadRoutes",
+        "workloadStatePattern": "ready=2/3,restarts=1",
+        "dependencyPath": "payments-api->payments-ledger",
+        "likelyCauseClass": "CHANGE_REGRESSION"
+      },
+      "operatorSummary": "A startup validator release caused settlement route loading failures on boot.",
+      "deepLinks": [
+        {
+          "label": "Historical RCA",
+          "source": "FIXTURE",
+          "url": "https://runbooks.example.invalid/incidents/inc-pay-20260214",
+          "description": "Open historical incident brief"
+        }
+      ]
+    }
+  ],
   "catalogEntries": [
     {
       "serviceId": "payments-api",
@@ -258,7 +499,33 @@
         "latency": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
         "cpu": "sum(rate(container_cpu_usage_seconds_total[5m]))",
         "memory": "sum(container_memory_working_set_bytes)"
-      }
+      },
+      "repoWorkspace": "prodops",
+      "repoProject": "PAY",
+      "repoSlug": "payments-api",
+      "fileOwnershipPaths": [
+        "services/payments-api",
+        "src/payments"
+      ],
+      "traceServiceName": "payments-api",
+      "traceOperationHints": [
+        "POST /payments"
+      ],
+      "kibanaQuery": "service.name:payments-api",
+      "kibanaDataView": "payments-logs-*",
+      "versionLabelKeys": [
+        "app.kubernetes.io/version",
+        "version"
+      ],
+      "deploymentLabelKeys": [
+        "app.kubernetes.io/version"
+      ],
+      "imageTagHints": [
+        "payments-api"
+      ],
+      "dependencyServiceIds": [
+        "payments-ledger"
+      ]
     }
   ]
 }

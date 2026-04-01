@@ -1,0 +1,12 @@
+package com.prodops.controltower.mcp.domain.model;
+
+public enum CauseType {
+  CHANGE_REGRESSION,
+  BAD_ROLLOUT,
+  DEPENDENCY_FAILURE,
+  RESOURCE_SATURATION,
+  WORKLOAD_CRASH_LOOP,
+  DOWNSTREAM_SERVICE_FAULT,
+  OBSERVABILITY_ARTIFACT,
+  UNKNOWN
+}

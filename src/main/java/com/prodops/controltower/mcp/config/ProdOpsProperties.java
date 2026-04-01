@@ -43,8 +43,14 @@ public record ProdOpsProperties(
       @NotNull @DefaultValue("PT15M") Duration defaultLookback,
       @Min(1) @Max(5000) @DefaultValue("250") int maxSeries,
       @Min(1) @Max(1000) @DefaultValue("100") int maxLogLines,
+      @Min(1) @Max(5000) @DefaultValue("200") int maxLogHits,
       @Min(1) @Max(100) @DefaultValue("10") int maxDashboards,
       @Min(1) @Max(1000) @DefaultValue("200") int maxEvents,
+      @Min(1) @Max(500) @DefaultValue("50") int maxTraces,
+      @Min(1) @Max(5000) @DefaultValue("200") int maxTraceSpans,
+      @Min(1) @Max(500) @DefaultValue("20") int maxChangeCandidates,
+      @Min(1) @Max(1000) @DefaultValue("60") int maxEvidenceNodes,
+      @Min(1) @Max(100) @DefaultValue("5") int maxSimilarIncidents,
       @DefaultValue("true") boolean rawPromqlEnabled,
       @DefaultValue("true") boolean requireOriginValidation) {}
 
@@ -79,7 +85,11 @@ public record ProdOpsProperties(
       @NotBlank @DefaultValue("fixtures") String basePath,
       @NotEmpty
           @DefaultValue(
-              "[\"scenario_payments_rollout_regression\",\"scenario_upi_recon_saturation\",\"scenario_tradex_alert_storm\"]")
+              "[\"scenario_payments_rollout_regression\","
+                  + "\"scenario_upi_recon_saturation\","
+                  + "\"scenario_tradex_alert_storm\","
+                  + "\"scenario_checkout_dependency_regression\","
+                  + "\"scenario_ledger_observability_gap\"]")
           List<String> scenarios) {}
 
   public record ClusterProperties(
@@ -91,7 +101,10 @@ public record ProdOpsProperties(
       @DefaultValue("criticality") String criticalityLabelKey,
       @Valid @NotNull KubernetesProperties kubernetes,
       @Valid @NotNull PrometheusProperties prometheus,
-      @Valid @NotNull GrafanaProperties grafana) {}
+      @Valid @NotNull GrafanaProperties grafana,
+      @Valid @NotNull @DefaultValue BitbucketProperties bitbucket,
+      @Valid @NotNull @DefaultValue KibanaProperties kibana,
+      @Valid @NotNull @DefaultValue JaegerProperties jaeger) {}
 
   public record KubernetesProperties(
       @DefaultValue("false") boolean inCluster,
@@ -108,5 +121,27 @@ public record ProdOpsProperties(
       @DefaultValue("") String baseUrl,
       @DefaultValue("") String bearerTokenRef,
       @DefaultValue("") String defaultFolder,
+      @NotNull @DefaultValue("PT30S") Duration timeout) {}
+
+  public record BitbucketProperties(
+      @DefaultValue("") String baseUrl,
+      @DefaultValue("") String bearerTokenRef,
+      @DefaultValue("") String workspace,
+      @DefaultValue("") String projectKey,
+      @DefaultValue("") String repoSlug,
+      @DefaultValue("") String browseBaseUrl,
+      @NotNull @DefaultValue("PT30S") Duration timeout) {}
+
+  public record KibanaProperties(
+      @DefaultValue("") String baseUrl,
+      @DefaultValue("") String bearerTokenRef,
+      @DefaultValue("") String defaultDataView,
+      @DefaultValue("") String elasticsearchBaseUrl,
+      @DefaultValue("/app/discover") String discoverPath,
+      @NotNull @DefaultValue("PT30S") Duration timeout) {}
+
+  public record JaegerProperties(
+      @DefaultValue("") String baseUrl,
+      @DefaultValue("") String bearerTokenRef,
       @NotNull @DefaultValue("PT30S") Duration timeout) {}
 }

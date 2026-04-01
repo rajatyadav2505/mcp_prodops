@@ -1,0 +1,387 @@
+{
+  "cluster": {
+    "name": "prodops-uat",
+    "environment": "UAT",
+    "kubernetesVersion": "1.30.2",
+    "region": "in-west-1",
+    "metadata": {
+      "scenario": "checkout_dependency_regression"
+    }
+  },
+  "namespaces": [
+    {
+      "cluster": "prodops-uat",
+      "name": "checkout-uat",
+      "labels": {
+        "owner-team": "checkout-platform",
+        "criticality": "critical"
+      },
+      "ownerTeam": "checkout-platform",
+      "criticality": "critical",
+      "critical": true
+    }
+  ],
+  "workloads": [
+    {
+      "cluster": "prodops-uat",
+      "namespace": "checkout-uat",
+      "name": "checkout-api",
+      "kind": "DEPLOYMENT",
+      "labels": {
+        "app": "checkout-api",
+        "owner-team": "checkout-platform",
+        "app.kubernetes.io/version": "2026.03.25-7d00aa1"
+      },
+      "selector": {
+        "app": "checkout-api"
+      },
+      "desiredReplicas": 4,
+      "readyReplicas": 4,
+      "createdAt": "2026-03-25T06:00:00Z",
+      "updatedAt": "2026-03-25T10:02:00Z",
+      "ownerTeam": "checkout-platform",
+      "criticality": "critical"
+    }
+  ],
+  "pods": [
+    {
+      "cluster": "prodops-uat",
+      "namespace": "checkout-uat",
+      "name": "checkout-api-5cd4bd5c88-x2p4m",
+      "phase": "Running",
+      "ready": true,
+      "restartCount": 0,
+      "containerStates": ["app:running"],
+      "lastTerminationReason": "none",
+      "createdAt": "2026-03-25T10:03:00Z",
+      "ownerReference": {
+        "cluster": "prodops-uat",
+        "namespace": "checkout-uat",
+        "kind": "Deployment",
+        "name": "checkout-api"
+      }
+    }
+  ],
+  "warningEvents": [
+    {
+      "cluster": "prodops-uat",
+      "namespace": "checkout-uat",
+      "reason": "UnhealthyUpstream",
+      "message": "Downstream merchant-profile dependency returned 5xx responses during checkout lookup.",
+      "involvedKind": "Deployment",
+      "involvedName": "checkout-api",
+      "count": 6,
+      "firstTimestamp": "2026-03-25T10:14:00Z",
+      "lastTimestamp": "2026-03-25T10:31:00Z"
+    }
+  ],
+  "services": [
+    {
+      "cluster": "prodops-uat",
+      "namespace": "checkout-uat",
+      "name": "checkout-api",
+      "type": "ClusterIP",
+      "selector": {
+        "app": "checkout-api"
+      }
+    }
+  ],
+  "ingresses": [
+    {
+      "cluster": "prodops-uat",
+      "namespace": "checkout-uat",
+      "name": "checkout-public",
+      "hosts": ["checkout-uat.example.internal"],
+      "backendServices": ["checkout-api"]
+    }
+  ],
+  "hpas": [],
+  "pdbs": [],
+  "dashboards": [
+    {
+      "cluster": "prodops-uat",
+      "uid": "checkout-latency",
+      "title": "Checkout API User Journey",
+      "folder": "ProdOps",
+      "tags": ["checkout", "latency", "uat"],
+      "url": "https://grafana.example.internal/d/checkout-latency/checkout-api",
+      "panels": [
+        {
+          "title": "Dependency Latency",
+          "description": "Merchant profile dependency latency",
+          "targets": [
+            "sum(rate(http_client_duration_seconds_sum{app=\"checkout-api\",target=\"merchant-profile\"}[5m]))"
+          ]
+        }
+      ],
+      "variables": ["namespace", "service"],
+      "datasourceHints": ["prometheus-uat"]
+    }
+  ],
+  "metrics": [
+    {
+      "cluster": "prodops-uat",
+      "namespace": "checkout-uat",
+      "scope": "checkout-api",
+      "goldenSignals": [
+        {
+          "name": "error_rate_ratio",
+          "unit": "ratio",
+          "value": 0.61,
+          "status": "high",
+          "observedAt": "2026-03-25T10:33:00Z",
+          "query": "clamp_max(0.61,1)",
+          "explanation": "Checkout errors rise only after merchant profile dependency slows down."
+        },
+        {
+          "name": "latency_slo_ratio",
+          "unit": "ratio",
+          "value": 0.88,
+          "status": "high",
+          "observedAt": "2026-03-25T10:33:00Z",
+          "query": "clamp_max(0.88,1)",
+          "explanation": "Latency is dominated by downstream merchant profile calls."
+        },
+        {
+          "name": "cpu_saturation_ratio",
+          "unit": "ratio",
+          "value": 0.29,
+          "status": "normal",
+          "observedAt": "2026-03-25T10:33:00Z",
+          "query": "clamp_max(0.29,1)",
+          "explanation": "Capacity is healthy on checkout-api itself."
+        },
+        {
+          "name": "memory_pressure_ratio",
+          "unit": "ratio",
+          "value": 0.31,
+          "status": "normal",
+          "observedAt": "2026-03-25T10:33:00Z",
+          "query": "clamp_max(0.31,1)",
+          "explanation": "Memory is stable and does not explain the incident."
+        }
+      ],
+      "series": [
+        {
+          "name": "error_rate_ratio",
+          "query": "clamp_max(0.61,1)",
+          "unit": "ratio",
+          "labels": {
+            "service": "checkout-api"
+          },
+          "points": [
+            {"timestamp": "2026-03-25T09:40:00Z", "value": 0.06},
+            {"timestamp": "2026-03-25T09:55:00Z", "value": 0.07},
+            {"timestamp": "2026-03-25T10:10:00Z", "value": 0.09},
+            {"timestamp": "2026-03-25T10:25:00Z", "value": 0.42},
+            {"timestamp": "2026-03-25T10:40:00Z", "value": 0.61}
+          ]
+        },
+        {
+          "name": "latency_slo_ratio",
+          "query": "clamp_max(0.88,1)",
+          "unit": "ratio",
+          "labels": {
+            "service": "checkout-api"
+          },
+          "points": [
+            {"timestamp": "2026-03-25T09:40:00Z", "value": 0.24},
+            {"timestamp": "2026-03-25T09:55:00Z", "value": 0.27},
+            {"timestamp": "2026-03-25T10:10:00Z", "value": 0.28},
+            {"timestamp": "2026-03-25T10:25:00Z", "value": 0.66},
+            {"timestamp": "2026-03-25T10:40:00Z", "value": 0.88}
+          ]
+        }
+      ]
+    }
+  ],
+  "logs": [],
+  "bitbucketChanges": [
+    {
+      "changeId": "checkout-pr-211",
+      "serviceId": "checkout-api",
+      "workspace": "prodops",
+      "repoSlug": "checkout-api",
+      "projectKey": "CHK",
+      "commitSha": "cafe11223344556677889900aabbccddeeff0011",
+      "branch": "release/checkout-api",
+      "title": "Refactor checkout banner copy",
+      "description": "UI response message cleanup for low-funds banner handling.",
+      "labels": ["ux"],
+      "changedFiles": [
+        "services/checkout-api/src/main/java/com/prodops/checkout/web/BannerCopyFormatter.java"
+      ],
+      "author": "megha.s",
+      "reviewers": ["arpit.r"],
+      "committedAt": "2026-03-25T10:05:00Z",
+      "mergedAt": "2026-03-25T10:09:00Z",
+      "pullRequest": {
+        "pullRequestId": "211",
+        "title": "Refactor checkout banner copy",
+        "description": "UI response message cleanup for low-funds banner handling.",
+        "sourceBranch": "feature/banner-copy",
+        "destinationBranch": "release/checkout-api",
+        "author": "megha.s",
+        "reviewers": ["arpit.r"],
+        "labels": ["ux"],
+        "createdAt": "2026-03-25T09:40:00Z",
+        "updatedAt": "2026-03-25T10:09:00Z",
+        "mergedAt": "2026-03-25T10:09:00Z",
+        "deepLink": {
+          "label": "PR 211",
+          "source": "BITBUCKET",
+          "url": "https://bitbucket.example.internal/projects/CHK/repos/checkout-api/pull-requests/211",
+          "description": "Bitbucket pull request"
+        }
+      },
+      "pipelineRuns": [
+        {
+          "pipelineId": "pipe-2211",
+          "state": "COMPLETED",
+          "result": "SUCCESSFUL",
+          "targetBranch": "release/checkout-api",
+          "targetCommit": "cafe11223344556677889900aabbccddeeff0011",
+          "deployment": true,
+          "createdAt": "2026-03-25T10:10:00Z",
+          "completedAt": "2026-03-25T10:13:00Z",
+          "deepLink": {
+            "label": "Pipeline 2211",
+            "source": "BITBUCKET",
+            "url": "https://bitbucket.example.internal/projects/CHK/repos/checkout-api/pipelines/2211",
+            "description": "Bitbucket deployment pipeline"
+          }
+        }
+      ],
+      "deepLinks": [
+        {
+          "label": "PR 211",
+          "source": "BITBUCKET",
+          "url": "https://bitbucket.example.internal/projects/CHK/repos/checkout-api/pull-requests/211",
+          "description": "Bitbucket pull request"
+        }
+      ]
+    }
+  ],
+  "kibanaLogs": [
+    {
+      "cluster": "prodops-uat",
+      "namespace": "checkout-uat",
+      "serviceOrWorkload": "checkout-api",
+      "podName": "checkout-api-5cd4bd5c88-x2p4m",
+      "container": "app",
+      "severity": "ERROR",
+      "message": "merchant-profile returned HTTP 503 during customer risk lookup",
+      "sanitizedMessage": "merchant-profile returned HTTP 503 during customer risk lookup",
+      "exceptionSignature": "merchant-profile returned HTTP 503",
+      "traceId": "trace-checkout-001",
+      "requestId": "req-checkout-001",
+      "versionTag": "2026.03.25-7d00aa1",
+      "observedAt": "2026-03-25T10:18:00Z",
+      "deepLink": {
+        "label": "Kibana Discover checkout-api",
+        "source": "KIBANA",
+        "url": "https://kibana.example.internal/app/discover#/view/checkout-api-errors",
+        "description": "Kibana discover query"
+      }
+    }
+  ],
+  "traces": [
+    {
+      "cluster": "prodops-uat",
+      "namespace": "checkout-uat",
+      "serviceOrWorkload": "checkout-api",
+      "traces": [
+        {
+          "traceId": "trace-checkout-001",
+          "rootService": "checkout-api",
+          "operation": "POST /checkout",
+          "startTime": "2026-03-25T10:18:03Z",
+          "duration": "PT1.24S",
+          "error": true,
+          "firstFailingService": "merchant-profile",
+          "firstFailingSpan": "GET /merchant-profile/{id}",
+          "criticalPathDuration": "PT1.17S",
+          "errorSpans": [
+            {
+              "spanId": "span-merchant-profile",
+              "parentSpanId": "span-checkout-root",
+              "serviceName": "merchant-profile",
+              "operation": "GET /merchant-profile/{id}",
+              "startTime": "2026-03-25T10:18:03.050Z",
+              "duration": "PT1.1S",
+              "error": true,
+              "retry": false,
+              "podName": "merchant-profile-6d5fcb76df-s8k8x",
+              "versionTag": "2026.03.25-bb44219",
+              "tags": {
+                "error": "true",
+                "service.version": "2026.03.25-bb44219"
+              }
+            }
+          ],
+          "latencyHotspots": [
+            {
+              "spanId": "span-merchant-profile",
+              "parentSpanId": "span-checkout-root",
+              "serviceName": "merchant-profile",
+              "operation": "GET /merchant-profile/{id}",
+              "startTime": "2026-03-25T10:18:03.050Z",
+              "duration": "PT1.1S",
+              "error": true,
+              "retry": false,
+              "podName": "merchant-profile-6d5fcb76df-s8k8x",
+              "versionTag": "2026.03.25-bb44219",
+              "tags": {
+                "error": "true",
+                "service.version": "2026.03.25-bb44219"
+              }
+            }
+          ],
+          "dependencyEdges": [
+            {
+              "sourceService": "checkout-api",
+              "targetService": "merchant-profile",
+              "latency": "PT1.1S",
+              "error": true
+            }
+          ],
+          "deepLink": {
+            "label": "Jaeger trace trace-checkout-001",
+            "source": "JAEGER",
+            "url": "https://jaeger.example.internal/trace/trace-checkout-001",
+            "description": "Jaeger trace"
+          },
+          "versionTag": "2026.03.25-7d00aa1",
+          "podName": "checkout-api-5cd4bd5c88-x2p4m"
+        }
+      ]
+    }
+  ],
+  "historicalIncidents": [
+    {
+      "incidentId": "hist-checkout-merchant-profile-2026-01-12",
+      "title": "Checkout latency due to merchant profile outage",
+      "occurredAt": "2026-01-12T09:10:00Z",
+      "serviceId": "checkout-api",
+      "causeType": "DEPENDENCY_FAILURE",
+      "fingerprint": {
+        "metricOnsetPattern": "error_rate_ratio:high,latency_slo_ratio:high",
+        "topLogSignatures": ["merchant-profile returned HTTP 503"],
+        "spanErrorSignature": "merchant-profile/GET /merchant-profile/{id}",
+        "workloadStatePattern": "ready=4/4,restarts=0",
+        "dependencyPath": "checkout-api->merchant-profile",
+        "likelyCauseClass": "DEPENDENCY_FAILURE"
+      },
+      "operatorSummary": "Merchant profile dependency failed first, causing checkout latency and 5xx amplification.",
+      "deepLinks": [
+        {
+          "label": "Historical checkout incident",
+          "source": "INCIDENT_HISTORY",
+          "url": "https://wiki.example.internal/incidents/checkout-merchant-profile-2026-01-12",
+          "description": "Historical incident record"
+        }
+      ]
+    }
+  ],
+  "catalogEntries": []
+}

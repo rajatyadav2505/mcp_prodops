@@ -6,6 +6,7 @@ import com.prodops.controltower.mcp.domain.model.ServiceCatalogEntry;
 import com.prodops.controltower.mcp.domain.port.MetricsPort;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -36,13 +37,8 @@ public class FixtureMetricsAdapter implements MetricsPort {
     List<com.prodops.controltower.mcp.domain.model.MetricSeries> series =
         loader.loadRepository().metrics().stream()
             .filter(bundle -> bundle.cluster().equals(cluster))
-            .filter(
-                bundle ->
-                    query.contains(bundle.scope())
-                        || bundle.series().stream()
-                            .anyMatch(metric -> metric.query().equals(query)))
             .findFirst()
-            .map(FixtureMetricBundle::series)
+            .map(bundle -> matchingSeries(bundle, query))
             .orElse(List.of());
     return new PromqlExecutionResult(
         cluster,
@@ -59,13 +55,8 @@ public class FixtureMetricsAdapter implements MetricsPort {
     List<com.prodops.controltower.mcp.domain.model.MetricSeries> series =
         loader.loadRepository().metrics().stream()
             .filter(bundle -> bundle.cluster().equals(cluster))
-            .filter(
-                bundle ->
-                    query.contains(bundle.scope())
-                        || bundle.series().stream()
-                            .anyMatch(metric -> metric.query().equals(query)))
             .findFirst()
-            .map(FixtureMetricBundle::series)
+            .map(bundle -> matchingSeries(bundle, query))
             .orElse(List.of());
     return new PromqlExecutionResult(
         cluster,
@@ -83,5 +74,34 @@ public class FixtureMetricsAdapter implements MetricsPort {
         .filter(bundle -> bundle.namespace().equals(namespace))
         .filter(bundle -> bundle.scope().equals(scope))
         .findFirst();
+  }
+
+  private List<com.prodops.controltower.mcp.domain.model.MetricSeries> matchingSeries(
+      FixtureMetricBundle bundle, String query) {
+    List<com.prodops.controltower.mcp.domain.model.MetricSeries> exactMatches =
+        bundle.series().stream().filter(metric -> metric.query().equals(query)).toList();
+    if (!exactMatches.isEmpty()) {
+      return exactMatches;
+    }
+    String normalizedQuery = query == null ? "" : query.toLowerCase(Locale.ROOT);
+    List<com.prodops.controltower.mcp.domain.model.MetricSeries> hintedMatches =
+        bundle.series().stream()
+            .filter(
+                metric ->
+                    normalizedQuery.contains(metric.name().toLowerCase(Locale.ROOT))
+                        || normalizedQuery.contains(metric.query().toLowerCase(Locale.ROOT))
+                        || (normalizedQuery.contains("http_requests")
+                            && metric.name().equals("error_rate_ratio"))
+                        || (normalizedQuery.contains("histogram_quantile")
+                            && metric.name().equals("latency_slo_ratio"))
+                        || (normalizedQuery.contains("container_cpu")
+                            && metric.name().equals("cpu_saturation_ratio"))
+                        || (normalizedQuery.contains("container_memory")
+                            && metric.name().equals("memory_pressure_ratio")))
+            .toList();
+    if (!hintedMatches.isEmpty()) {
+      return hintedMatches;
+    }
+    return bundle.series();
   }
 }

@@ -1,7 +1,10 @@
 package com.prodops.controltower.mcp.mcp.tools;
 
 import com.prodops.controltower.mcp.domain.model.DashboardInfo;
+import com.prodops.controltower.mcp.domain.model.LogSearchResult;
 import com.prodops.controltower.mcp.domain.model.PromqlExecutionResult;
+import com.prodops.controltower.mcp.domain.model.TraceSearchResult;
+import com.prodops.controltower.mcp.domain.model.TraceSummary;
 import com.prodops.controltower.mcp.domain.service.ObservabilityService;
 import com.prodops.controltower.mcp.mcp.McpInvocationSupport;
 import com.prodops.controltower.mcp.support.ArgumentMap;
@@ -99,5 +102,162 @@ public class ObservabilityTools {
         () ->
             observabilityService.getDashboardSummary(
                 cluster, dashboardUid, invocationSupport.identity()));
+  }
+
+  @McpTool(
+      name = "search_kibana_logs",
+      description =
+          "Search Kibana logs by time range, namespace, service or workload, severity, text, trace id, request id, and version tags.")
+  public LogSearchResult searchKibanaLogs(
+      @McpToolParam(description = "Cluster name") String cluster,
+      @McpToolParam(description = "Namespace name") String namespace,
+      @McpToolParam(description = "Service ID or workload name") String serviceOrWorkload,
+      @McpToolParam(description = "Lookback minutes") @jakarta.validation.constraints.Min(1)
+          int lookbackMinutes,
+      @McpToolParam(description = "Optional severity", required = false) String severity,
+      @McpToolParam(description = "Optional search text", required = false) String text,
+      @McpToolParam(description = "Optional trace id", required = false) String traceId,
+      @McpToolParam(description = "Optional request id", required = false) String requestId,
+      @McpToolParam(description = "Optional version tag", required = false) String versionTag) {
+    return invocationSupport.invoke(
+        "tool",
+        "search_kibana_logs",
+        ArgumentMap.of(
+            "cluster",
+            cluster,
+            "namespace",
+            namespace,
+            "serviceOrWorkload",
+            serviceOrWorkload,
+            "lookbackMinutes",
+            lookbackMinutes,
+            "severity",
+            severity,
+            "text",
+            text,
+            "traceId",
+            traceId,
+            "requestId",
+            requestId,
+            "versionTag",
+            versionTag),
+        () ->
+            observabilityService.searchKibanaLogs(
+                cluster,
+                namespace,
+                serviceOrWorkload,
+                Duration.ofMinutes(lookbackMinutes),
+                severity,
+                text,
+                traceId,
+                requestId,
+                versionTag,
+                invocationSupport.identity()));
+  }
+
+  @McpTool(
+      name = "summarize_kibana_errors",
+      description =
+          "Summarize dominant Kibana error signatures, spikes, and novel failures around symptom onset.")
+  public LogSearchResult summarizeKibanaErrors(
+      @McpToolParam(description = "Cluster name") String cluster,
+      @McpToolParam(description = "Namespace name") String namespace,
+      @McpToolParam(description = "Service ID or workload name") String serviceOrWorkload,
+      @McpToolParam(description = "Lookback minutes") @jakarta.validation.constraints.Min(1)
+          int lookbackMinutes,
+      @McpToolParam(description = "Optional search text", required = false) String text,
+      @McpToolParam(description = "Optional trace id", required = false) String traceId,
+      @McpToolParam(description = "Optional request id", required = false) String requestId,
+      @McpToolParam(description = "Optional version tag", required = false) String versionTag) {
+    return invocationSupport.invoke(
+        "tool",
+        "summarize_kibana_errors",
+        ArgumentMap.of(
+            "cluster",
+            cluster,
+            "namespace",
+            namespace,
+            "serviceOrWorkload",
+            serviceOrWorkload,
+            "lookbackMinutes",
+            lookbackMinutes,
+            "text",
+            text,
+            "traceId",
+            traceId,
+            "requestId",
+            requestId,
+            "versionTag",
+            versionTag),
+        () ->
+            observabilityService.summarizeKibanaErrors(
+                cluster,
+                namespace,
+                serviceOrWorkload,
+                Duration.ofMinutes(lookbackMinutes),
+                text,
+                traceId,
+                requestId,
+                versionTag,
+                invocationSupport.identity()));
+  }
+
+  @McpTool(
+      name = "search_jaeger_traces",
+      description =
+          "Search Jaeger traces by service, operation, time range, error status, and trace id.")
+  public TraceSearchResult searchJaegerTraces(
+      @McpToolParam(description = "Cluster name") String cluster,
+      @McpToolParam(description = "Namespace name") String namespace,
+      @McpToolParam(description = "Service ID or workload name") String serviceOrWorkload,
+      @McpToolParam(description = "Lookback minutes") @jakarta.validation.constraints.Min(1)
+          int lookbackMinutes,
+      @McpToolParam(description = "Optional operation name", required = false) String operation,
+      @McpToolParam(description = "Errors only") boolean errorsOnly,
+      @McpToolParam(description = "Optional trace id", required = false) String traceId) {
+    return invocationSupport.invoke(
+        "tool",
+        "search_jaeger_traces",
+        ArgumentMap.of(
+            "cluster",
+            cluster,
+            "namespace",
+            namespace,
+            "serviceOrWorkload",
+            serviceOrWorkload,
+            "lookbackMinutes",
+            lookbackMinutes,
+            "operation",
+            operation,
+            "errorsOnly",
+            errorsOnly,
+            "traceId",
+            traceId),
+        () ->
+            observabilityService.searchJaegerTraces(
+                cluster,
+                namespace,
+                serviceOrWorkload,
+                Duration.ofMinutes(lookbackMinutes),
+                operation,
+                errorsOnly,
+                traceId,
+                invocationSupport.identity()));
+  }
+
+  @McpTool(
+      name = "get_jaeger_trace_summary",
+      description =
+          "Get a Jaeger trace summary including first failing span, latency hotspots, dependency edges, and deep link.")
+  public TraceSummary getJaegerTraceSummary(
+      @McpToolParam(description = "Cluster name") String cluster,
+      @McpToolParam(description = "Trace id") String traceId) {
+    return invocationSupport.invoke(
+        "tool",
+        "get_jaeger_trace_summary",
+        ArgumentMap.of("cluster", cluster, "traceId", traceId),
+        () ->
+            observabilityService.getJaegerTraceSummary(
+                cluster, traceId, invocationSupport.identity()));
   }
 }

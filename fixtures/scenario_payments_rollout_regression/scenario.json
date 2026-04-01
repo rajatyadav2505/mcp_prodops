@@ -29,7 +29,9 @@
       "kind": "DEPLOYMENT",
       "labels": {
         "app": "payments-api",
-        "owner-team": "cards-platform"
+        "owner-team": "cards-platform",
+        "app.kubernetes.io/version": "2026.03.25-4b91d1c",
+        "release": "payments-api-112"
       },
       "selector": {
         "app": "payments-api"
@@ -155,7 +157,9 @@
         {
           "title": "Error Rate",
           "description": "5xx ratio for payments-api",
-          "targets": ["sum(rate(http_requests_total{app=\"payments-api\",status=~\"5..\"}[5m]))"]
+          "targets": [
+            "sum(rate(http_requests_total{app=\"payments-api\",status=~\"5..\"}[5m]))"
+          ]
         }
       ],
       "variables": ["namespace", "service"],
@@ -174,7 +178,7 @@
           "value": 0.82,
           "status": "high",
           "observedAt": "2026-03-25T10:32:00Z",
-          "query": "error_rate_payments_api",
+          "query": "clamp_max(0.82,1)",
           "explanation": "Error ratio breached the configured risk threshold after rollout revision 112."
         },
         {
@@ -183,7 +187,7 @@
           "value": 0.91,
           "status": "high",
           "observedAt": "2026-03-25T10:32:00Z",
-          "query": "latency_payments_api",
+          "query": "clamp_max(0.91,1)",
           "explanation": "p95 latency rose above the service SLO budget immediately after rollout."
         },
         {
@@ -192,7 +196,7 @@
           "value": 0.47,
           "status": "moderate",
           "observedAt": "2026-03-25T10:32:00Z",
-          "query": "cpu_payments_api",
+          "query": "clamp_max(0.47,1)",
           "explanation": "CPU is elevated but not the dominant failure signal."
         },
         {
@@ -201,24 +205,69 @@
           "value": 0.52,
           "status": "moderate",
           "observedAt": "2026-03-25T10:32:00Z",
-          "query": "memory_payments_api",
+          "query": "clamp_max(0.52,1)",
           "explanation": "Memory pressure is secondary relative to restart and error signals."
         }
       ],
       "series": [
         {
-          "name": "latency",
-          "query": "forecast_cpu_payments-api",
+          "name": "error_rate_ratio",
+          "query": "clamp_max(0.82,1)",
           "unit": "ratio",
           "labels": {
             "service": "payments-api"
           },
           "points": [
-            {"timestamp": "2026-03-25T09:30:00Z", "value": 0.34},
-            {"timestamp": "2026-03-25T09:45:00Z", "value": 0.39},
-            {"timestamp": "2026-03-25T10:00:00Z", "value": 0.41},
-            {"timestamp": "2026-03-25T10:15:00Z", "value": 0.52},
-            {"timestamp": "2026-03-25T10:30:00Z", "value": 0.58}
+            {"timestamp": "2026-03-25T09:35:00Z", "value": 0.08},
+            {"timestamp": "2026-03-25T09:50:00Z", "value": 0.09},
+            {"timestamp": "2026-03-25T10:05:00Z", "value": 0.11},
+            {"timestamp": "2026-03-25T10:20:00Z", "value": 0.53},
+            {"timestamp": "2026-03-25T10:35:00Z", "value": 0.82}
+          ]
+        },
+        {
+          "name": "latency_slo_ratio",
+          "query": "clamp_max(0.91,1)",
+          "unit": "ratio",
+          "labels": {
+            "service": "payments-api"
+          },
+          "points": [
+            {"timestamp": "2026-03-25T09:35:00Z", "value": 0.21},
+            {"timestamp": "2026-03-25T09:50:00Z", "value": 0.24},
+            {"timestamp": "2026-03-25T10:05:00Z", "value": 0.27},
+            {"timestamp": "2026-03-25T10:20:00Z", "value": 0.66},
+            {"timestamp": "2026-03-25T10:35:00Z", "value": 0.91}
+          ]
+        },
+        {
+          "name": "cpu_saturation_ratio",
+          "query": "clamp_max(0.47,1)",
+          "unit": "ratio",
+          "labels": {
+            "service": "payments-api"
+          },
+          "points": [
+            {"timestamp": "2026-03-25T09:35:00Z", "value": 0.29},
+            {"timestamp": "2026-03-25T09:50:00Z", "value": 0.31},
+            {"timestamp": "2026-03-25T10:05:00Z", "value": 0.34},
+            {"timestamp": "2026-03-25T10:20:00Z", "value": 0.42},
+            {"timestamp": "2026-03-25T10:35:00Z", "value": 0.47}
+          ]
+        },
+        {
+          "name": "memory_pressure_ratio",
+          "query": "clamp_max(0.52,1)",
+          "unit": "ratio",
+          "labels": {
+            "service": "payments-api"
+          },
+          "points": [
+            {"timestamp": "2026-03-25T09:35:00Z", "value": 0.33},
+            {"timestamp": "2026-03-25T09:50:00Z", "value": 0.34},
+            {"timestamp": "2026-03-25T10:05:00Z", "value": 0.36},
+            {"timestamp": "2026-03-25T10:20:00Z", "value": 0.45},
+            {"timestamp": "2026-03-25T10:35:00Z", "value": 0.52}
           ]
         }
       ]
@@ -235,6 +284,309 @@
         "Failed to bind settlement route"
       ],
       "truncated": false
+    }
+  ],
+  "bitbucketChanges": [
+    {
+      "changeId": "payments-pr-482",
+      "serviceId": "payments-api",
+      "workspace": "prodops",
+      "repoSlug": "payments-api",
+      "projectKey": "PAY",
+      "commitSha": "4b91d1c9aa770f8d2a66f9c5dd18f70f93e40012",
+      "branch": "release/payments-api",
+      "title": "Enable settlement schema v4 for settlement binding",
+      "description": "Moves the settlement binder to schema v4 and updates config validation during startup.",
+      "labels": ["payments", "schema", "release"],
+      "changedFiles": [
+        "services/payments-api/src/main/java/com/prodops/payments/config/SettlementSchemaBinder.java",
+        "services/payments-api/src/main/resources/application-payments.yaml"
+      ],
+      "author": "priya.shah",
+      "reviewers": ["anand.k", "vivek.t"],
+      "committedAt": "2026-03-25T10:01:00Z",
+      "mergedAt": "2026-03-25T10:08:00Z",
+      "pullRequest": {
+        "pullRequestId": "482",
+        "title": "Enable settlement schema v4 for settlement binding",
+        "description": "Moves the settlement binder to schema v4 and updates config validation during startup.",
+        "sourceBranch": "feature/schema-v4-rollout",
+        "destinationBranch": "release/payments-api",
+        "author": "priya.shah",
+        "reviewers": ["anand.k", "vivek.t"],
+        "labels": ["payments", "schema", "release"],
+        "createdAt": "2026-03-25T09:25:00Z",
+        "updatedAt": "2026-03-25T10:08:00Z",
+        "mergedAt": "2026-03-25T10:08:00Z",
+        "deepLink": {
+          "label": "PR 482",
+          "source": "BITBUCKET",
+          "url": "https://bitbucket.example.internal/projects/PAY/repos/payments-api/pull-requests/482",
+          "description": "Bitbucket pull request"
+        }
+      },
+      "pipelineRuns": [
+        {
+          "pipelineId": "pipe-9041",
+          "state": "COMPLETED",
+          "result": "FAILED",
+          "targetBranch": "release/payments-api",
+          "targetCommit": "4b91d1c9aa770f8d2a66f9c5dd18f70f93e40012",
+          "deployment": true,
+          "createdAt": "2026-03-25T10:09:00Z",
+          "completedAt": "2026-03-25T10:11:00Z",
+          "deepLink": {
+            "label": "Pipeline 9041",
+            "source": "BITBUCKET",
+            "url": "https://bitbucket.example.internal/projects/PAY/repos/payments-api/pipelines/9041",
+            "description": "Bitbucket deployment pipeline"
+          }
+        }
+      ],
+      "deepLinks": [
+        {
+          "label": "PR 482",
+          "source": "BITBUCKET",
+          "url": "https://bitbucket.example.internal/projects/PAY/repos/payments-api/pull-requests/482",
+          "description": "Bitbucket pull request"
+        },
+        {
+          "label": "Commit 4b91d1c",
+          "source": "BITBUCKET",
+          "url": "https://bitbucket.example.internal/projects/PAY/repos/payments-api/commits/4b91d1c9aa770f8d2a66f9c5dd18f70f93e40012",
+          "description": "Bitbucket commit"
+        }
+      ]
+    },
+    {
+      "changeId": "payments-pr-479",
+      "serviceId": "payments-api",
+      "workspace": "prodops",
+      "repoSlug": "payments-api",
+      "projectKey": "PAY",
+      "commitSha": "1f2aa44be92cc487fbfd11d622a5d2d1a4a11a04",
+      "branch": "release/payments-api",
+      "title": "Refactor settlement metrics labels",
+      "description": "Prometheus label cleanup for settlement counters.",
+      "labels": ["metrics"],
+      "changedFiles": [
+        "services/payments-api/src/main/java/com/prodops/payments/metrics/SettlementMetrics.java"
+      ],
+      "author": "sneha.m",
+      "reviewers": ["vivek.t"],
+      "committedAt": "2026-03-25T08:15:00Z",
+      "mergedAt": "2026-03-25T08:22:00Z",
+      "pullRequest": {
+        "pullRequestId": "479",
+        "title": "Refactor settlement metrics labels",
+        "description": "Prometheus label cleanup for settlement counters.",
+        "sourceBranch": "feature/metrics-cleanup",
+        "destinationBranch": "release/payments-api",
+        "author": "sneha.m",
+        "reviewers": ["vivek.t"],
+        "labels": ["metrics"],
+        "createdAt": "2026-03-25T08:00:00Z",
+        "updatedAt": "2026-03-25T08:22:00Z",
+        "mergedAt": "2026-03-25T08:22:00Z",
+        "deepLink": {
+          "label": "PR 479",
+          "source": "BITBUCKET",
+          "url": "https://bitbucket.example.internal/projects/PAY/repos/payments-api/pull-requests/479",
+          "description": "Bitbucket pull request"
+        }
+      },
+      "pipelineRuns": [
+        {
+          "pipelineId": "pipe-9010",
+          "state": "COMPLETED",
+          "result": "SUCCESSFUL",
+          "targetBranch": "release/payments-api",
+          "targetCommit": "1f2aa44be92cc487fbfd11d622a5d2d1a4a11a04",
+          "deployment": true,
+          "createdAt": "2026-03-25T08:23:00Z",
+          "completedAt": "2026-03-25T08:28:00Z",
+          "deepLink": {
+            "label": "Pipeline 9010",
+            "source": "BITBUCKET",
+            "url": "https://bitbucket.example.internal/projects/PAY/repos/payments-api/pipelines/9010",
+            "description": "Bitbucket deployment pipeline"
+          }
+        }
+      ],
+      "deepLinks": [
+        {
+          "label": "PR 479",
+          "source": "BITBUCKET",
+          "url": "https://bitbucket.example.internal/projects/PAY/repos/payments-api/pull-requests/479",
+          "description": "Bitbucket pull request"
+        }
+      ]
+    }
+  ],
+  "kibanaLogs": [
+    {
+      "cluster": "prodops-uat",
+      "namespace": "payments-uat",
+      "serviceOrWorkload": "payments-api",
+      "podName": "payments-api-74c6d85d97-5r9vq",
+      "container": "app",
+      "severity": "ERROR",
+      "message": "java.lang.IllegalStateException: Settlement schema v4 cannot deserialize payoutConfig",
+      "sanitizedMessage": "java.lang.IllegalStateException: Settlement schema v4 cannot deserialize payoutConfig",
+      "exceptionSignature": "java.lang.IllegalStateException",
+      "traceId": "trace-pay-001",
+      "requestId": "req-pay-001",
+      "versionTag": "2026.03.25-4b91d1c",
+      "observedAt": "2026-03-25T10:14:00Z",
+      "deepLink": {
+        "label": "Kibana Discover payments-api",
+        "source": "KIBANA",
+        "url": "https://kibana.example.internal/app/discover#/view/payments-api-errors",
+        "description": "Kibana discover query"
+      }
+    },
+    {
+      "cluster": "prodops-uat",
+      "namespace": "payments-uat",
+      "serviceOrWorkload": "payments-api",
+      "podName": "payments-api-74c6d85d97-5r9vq",
+      "container": "app",
+      "severity": "ERROR",
+      "message": "java.lang.IllegalStateException: Settlement schema v4 cannot deserialize payoutConfig",
+      "sanitizedMessage": "java.lang.IllegalStateException: Settlement schema v4 cannot deserialize payoutConfig",
+      "exceptionSignature": "java.lang.IllegalStateException",
+      "traceId": "trace-pay-002",
+      "requestId": "req-pay-002",
+      "versionTag": "2026.03.25-4b91d1c",
+      "observedAt": "2026-03-25T10:18:00Z",
+      "deepLink": {
+        "label": "Kibana Discover payments-api",
+        "source": "KIBANA",
+        "url": "https://kibana.example.internal/app/discover#/view/payments-api-errors",
+        "description": "Kibana discover query"
+      }
+    },
+    {
+      "cluster": "prodops-uat",
+      "namespace": "payments-uat",
+      "serviceOrWorkload": "payments-api",
+      "podName": "payments-api-74c6d85d97-5r9vq",
+      "container": "app",
+      "severity": "ERROR",
+      "message": "Settlement binder failed during bootstrap for revision 112",
+      "sanitizedMessage": "Settlement binder failed during bootstrap for revision 112",
+      "exceptionSignature": "Settlement binder failed during bootstrap",
+      "traceId": "trace-pay-003",
+      "requestId": "req-pay-003",
+      "versionTag": "2026.03.25-4b91d1c",
+      "observedAt": "2026-03-25T10:22:00Z",
+      "deepLink": {
+        "label": "Kibana Discover payments-api",
+        "source": "KIBANA",
+        "url": "https://kibana.example.internal/app/discover#/view/payments-api-errors",
+        "description": "Kibana discover query"
+      }
+    }
+  ],
+  "traces": [
+    {
+      "cluster": "prodops-uat",
+      "namespace": "payments-uat",
+      "serviceOrWorkload": "payments-api",
+      "traces": [
+        {
+          "traceId": "trace-pay-001",
+          "rootService": "payments-api",
+          "operation": "POST /payments",
+          "startTime": "2026-03-25T10:14:05Z",
+          "duration": "PT0.82S",
+          "error": true,
+          "firstFailingService": "payments-api",
+          "firstFailingSpan": "bootstrap-config",
+          "criticalPathDuration": "PT0.78S",
+          "errorSpans": [
+            {
+              "spanId": "span-pay-bootstrap",
+              "parentSpanId": null,
+              "serviceName": "payments-api",
+              "operation": "bootstrap-config",
+              "startTime": "2026-03-25T10:14:05Z",
+              "duration": "PT0.78S",
+              "error": true,
+              "retry": false,
+              "podName": "payments-api-74c6d85d97-5r9vq",
+              "versionTag": "2026.03.25-4b91d1c",
+              "tags": {
+                "error": "true",
+                "service.version": "2026.03.25-4b91d1c"
+              }
+            }
+          ],
+          "latencyHotspots": [
+            {
+              "spanId": "span-pay-bootstrap",
+              "parentSpanId": null,
+              "serviceName": "payments-api",
+              "operation": "bootstrap-config",
+              "startTime": "2026-03-25T10:14:05Z",
+              "duration": "PT0.78S",
+              "error": true,
+              "retry": false,
+              "podName": "payments-api-74c6d85d97-5r9vq",
+              "versionTag": "2026.03.25-4b91d1c",
+              "tags": {
+                "error": "true",
+                "service.version": "2026.03.25-4b91d1c"
+              }
+            }
+          ],
+          "dependencyEdges": [
+            {
+              "sourceService": "payments-api",
+              "targetService": "payments-ledger",
+              "latency": "PT0.06S",
+              "error": false
+            }
+          ],
+          "deepLink": {
+            "label": "Jaeger trace trace-pay-001",
+            "source": "JAEGER",
+            "url": "https://jaeger.example.internal/trace/trace-pay-001",
+            "description": "Jaeger trace"
+          },
+          "versionTag": "2026.03.25-4b91d1c",
+          "podName": "payments-api-74c6d85d97-5r9vq"
+        }
+      ]
+    }
+  ],
+  "historicalIncidents": [
+    {
+      "incidentId": "hist-pay-schema-rollout-2026-02-13",
+      "title": "Payments schema rollout bootstrap failure",
+      "occurredAt": "2026-02-13T11:20:00Z",
+      "serviceId": "payments-api",
+      "causeType": "CHANGE_REGRESSION",
+      "fingerprint": {
+        "metricOnsetPattern": "error_rate_ratio:high,latency_slo_ratio:high",
+        "topLogSignatures": [
+          "java.lang.IllegalStateException",
+          "Settlement binder failed during bootstrap"
+        ],
+        "spanErrorSignature": "payments-api/bootstrap-config",
+        "workloadStatePattern": "ready=2/4,restarts=6",
+        "dependencyPath": "payments-api->payments-ledger",
+        "likelyCauseClass": "CHANGE_REGRESSION"
+      },
+      "operatorSummary": "A schema migration shipped before config compatibility checks completed, causing crash loops.",
+      "deepLinks": [
+        {
+          "label": "Incident dossier",
+          "source": "INCIDENT_HISTORY",
+          "url": "https://wiki.example.internal/incidents/payments-schema-rollout-2026-02-13",
+          "description": "Historical incident record"
+        }
+      ]
     }
   ],
   "catalogEntries": []

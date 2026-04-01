@@ -16,8 +16,14 @@ prodops:
       default-lookback: PT60M
       max-series: 250
       max-log-lines: 100
+      max-log-hits: 200
       max-dashboards: 10
       max-events: 200
+      max-traces: 50
+      max-trace-spans: 200
+      max-change-candidates: 20
+      max-evidence-nodes: 100
+      max-similar-incidents: 5
       raw-promql-enabled: true
       require-origin-validation: true
     cache:
@@ -50,6 +56,8 @@ prodops:
         - scenario_payments_rollout_regression
         - scenario_upi_recon_saturation
         - scenario_tradex_alert_storm
+        - scenario_checkout_dependency_regression
+        - scenario_ledger_observability_gap
     clusters:
       - name: prodops-uat
         environment: UAT
@@ -73,4 +81,23 @@ prodops:
           base-url: https://grafana.uat.example.internal
           bearer-token-ref: GRAFANA_BEARER_TOKEN
           default-folder: ProdOps
+          timeout: PT30S
+        bitbucket:
+          base-url: https://bitbucket.example.internal
+          bearer-token-ref: BITBUCKET_BEARER_TOKEN
+          workspace: prodops
+          project-key: PRODOPS
+          repo-slug: payments-api
+          browse-base-url: https://bitbucket.example.internal/projects/PRODOPS/repos/payments-api
+          timeout: PT30S
+        kibana:
+          base-url: https://kibana.example.internal
+          bearer-token-ref: KIBANA_BEARER_TOKEN
+          default-data-view: prodops-logs
+          elasticsearch-base-url: https://elasticsearch.example.internal
+          discover-path: /app/discover
+          timeout: PT30S
+        jaeger:
+          base-url: https://jaeger.example.internal
+          bearer-token-ref: JAEGER_BEARER_TOKEN
           timeout: PT30S

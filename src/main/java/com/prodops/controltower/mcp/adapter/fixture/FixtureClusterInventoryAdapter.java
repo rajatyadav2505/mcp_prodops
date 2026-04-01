@@ -89,7 +89,12 @@ public class FixtureClusterInventoryAdapter implements ClusterInventoryPort {
   @Override
   public List<WarningEvent> listWarningEvents(
       String cluster, String namespace, String workloadName, Duration since) {
-    Instant cutoff = Instant.now(clock).minus(since);
+    Instant referenceTime = loader.loadRepository().referenceTime();
+    Instant cutoff =
+        (referenceTime == null || referenceTime.equals(Instant.EPOCH)
+                ? Instant.now(clock)
+                : referenceTime)
+            .minus(since);
     return loader.loadRepository().warningEvents().stream()
         .filter(event -> event.cluster().equals(cluster))
         .filter(event -> namespace == null || event.namespace().equals(namespace))

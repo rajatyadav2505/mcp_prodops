@@ -1,0 +1,182 @@
+{
+  "cluster": {
+    "name": "prodops-uat",
+    "environment": "UAT",
+    "kubernetesVersion": "1.30.2",
+    "region": "in-west-1",
+    "metadata": {
+      "scenario": "ledger_observability_gap"
+    }
+  },
+  "namespaces": [
+    {
+      "cluster": "prodops-uat",
+      "name": "ledger-ops",
+      "labels": {
+        "owner-team": "ledger-platform",
+        "criticality": "high"
+      },
+      "ownerTeam": "ledger-platform",
+      "criticality": "high",
+      "critical": true
+    }
+  ],
+  "workloads": [
+    {
+      "cluster": "prodops-uat",
+      "namespace": "ledger-ops",
+      "name": "ledger-sync",
+      "kind": "DEPLOYMENT",
+      "labels": {
+        "app": "ledger-sync",
+        "owner-team": "ledger-platform"
+      },
+      "selector": {
+        "app": "ledger-sync"
+      },
+      "desiredReplicas": 3,
+      "readyReplicas": 2,
+      "createdAt": "2026-03-25T04:00:00Z",
+      "updatedAt": "2026-03-25T09:55:00Z",
+      "ownerTeam": "ledger-platform",
+      "criticality": "high"
+    }
+  ],
+  "pods": [
+    {
+      "cluster": "prodops-uat",
+      "namespace": "ledger-ops",
+      "name": "ledger-sync-7f8c6d5d8c-m8sjp",
+      "phase": "Running",
+      "ready": true,
+      "restartCount": 1,
+      "containerStates": ["app:running"],
+      "lastTerminationReason": "Error",
+      "createdAt": "2026-03-25T09:56:00Z",
+      "ownerReference": {
+        "cluster": "prodops-uat",
+        "namespace": "ledger-ops",
+        "kind": "Deployment",
+        "name": "ledger-sync"
+      }
+    }
+  ],
+  "warningEvents": [
+    {
+      "cluster": "prodops-uat",
+      "namespace": "ledger-ops",
+      "reason": "SyncDrift",
+      "message": "Ledger sync lag exceeded threshold, but downstream correlation metadata was missing.",
+      "involvedKind": "Deployment",
+      "involvedName": "ledger-sync",
+      "count": 4,
+      "firstTimestamp": "2026-03-25T10:09:00Z",
+      "lastTimestamp": "2026-03-25T10:26:00Z"
+    }
+  ],
+  "services": [
+    {
+      "cluster": "prodops-uat",
+      "namespace": "ledger-ops",
+      "name": "ledger-sync",
+      "type": "ClusterIP",
+      "selector": {
+        "app": "ledger-sync"
+      }
+    }
+  ],
+  "ingresses": [],
+  "hpas": [],
+  "pdbs": [],
+  "dashboards": [
+    {
+      "cluster": "prodops-uat",
+      "uid": "ledger-sync-overview",
+      "title": "Ledger Sync Overview",
+      "folder": "ProdOps",
+      "tags": ["ledger", "sync", "uat"],
+      "url": "https://grafana.example.internal/d/ledger-sync-overview/ledger-sync",
+      "panels": [
+        {
+          "title": "Sync Lag",
+          "description": "Ledger sync queue lag",
+          "targets": ["max(ledger_sync_lag_seconds{app=\"ledger-sync\"})"]
+        }
+      ],
+      "variables": ["namespace", "service"],
+      "datasourceHints": ["prometheus-uat"]
+    }
+  ],
+  "metrics": [
+    {
+      "cluster": "prodops-uat",
+      "namespace": "ledger-ops",
+      "scope": "ledger-sync",
+      "goldenSignals": [
+        {
+          "name": "error_rate_ratio",
+          "unit": "ratio",
+          "value": 0.34,
+          "status": "moderate",
+          "observedAt": "2026-03-25T10:30:00Z",
+          "query": "clamp_max(0.34,1)",
+          "explanation": "Some sync attempts fail, but error evidence is incomplete."
+        },
+        {
+          "name": "latency_slo_ratio",
+          "unit": "ratio",
+          "value": 0.58,
+          "status": "moderate",
+          "observedAt": "2026-03-25T10:30:00Z",
+          "query": "clamp_max(0.58,1)",
+          "explanation": "Lag is elevated, but not enough to isolate a specific root cause."
+        }
+      ],
+      "series": [
+        {
+          "name": "latency_slo_ratio",
+          "query": "clamp_max(0.58,1)",
+          "unit": "ratio",
+          "labels": {
+            "service": "ledger-sync"
+          },
+          "points": [
+            {"timestamp": "2026-03-25T09:45:00Z", "value": 0.31},
+            {"timestamp": "2026-03-25T10:00:00Z", "value": 0.36},
+            {"timestamp": "2026-03-25T10:15:00Z", "value": 0.47},
+            {"timestamp": "2026-03-25T10:30:00Z", "value": 0.58}
+          ]
+        }
+      ]
+    }
+  ],
+  "logs": [],
+  "bitbucketChanges": [
+    {
+      "changeId": "ledger-pr-73",
+      "serviceId": "ledger-sync",
+      "workspace": "",
+      "repoSlug": "",
+      "projectKey": "",
+      "commitSha": "8c2d6e5f44112233aabbccddeeff998877665544",
+      "branch": "release/ledger-sync",
+      "title": "Tune ledger retry interval",
+      "description": "Minor retry tuning with incomplete deployment metadata.",
+      "labels": ["ops"],
+      "changedFiles": [
+        "services/ledger-sync/src/main/resources/application.yaml"
+      ],
+      "author": "ops-bot",
+      "reviewers": [],
+      "committedAt": "2026-03-25T09:40:00Z",
+      "mergedAt": "2026-03-25T09:48:00Z",
+      "pullRequest": null,
+      "pipelineRuns": [],
+      "deepLinks": []
+    }
+  ],
+  "kibanaLogs": [],
+  "traces": [],
+  "historicalIncidents": [],
+  "catalogEntries": []
+}

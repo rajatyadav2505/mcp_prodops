@@ -53,8 +53,14 @@ public final class TestFixtures {
             Duration.ofMinutes(15),
             250,
             100,
+            100,
             10,
             200,
+            50,
+            200,
+            20,
+            60,
+            5,
             true,
             true),
         new ProdOpsProperties.CacheProperties(
@@ -90,7 +96,24 @@ public final class TestFixtures {
         "criticality",
         new ProdOpsProperties.KubernetesProperties(false, "", "", true),
         new ProdOpsProperties.PrometheusProperties(prometheusBaseUrl, "", Duration.ofSeconds(30)),
-        new ProdOpsProperties.GrafanaProperties(grafanaBaseUrl, "", "", Duration.ofSeconds(30)));
+        new ProdOpsProperties.GrafanaProperties(grafanaBaseUrl, "", "", Duration.ofSeconds(30)),
+        new ProdOpsProperties.BitbucketProperties(
+            "http://localhost:17990",
+            "",
+            "prodops",
+            "PAY",
+            "payments-api",
+            "http://localhost:17991",
+            Duration.ofSeconds(30)),
+        new ProdOpsProperties.KibanaProperties(
+            "http://localhost:15601",
+            "",
+            "logs-*",
+            "http://localhost:19200",
+            "/app/discover",
+            Duration.ofSeconds(30)),
+        new ProdOpsProperties.JaegerProperties(
+            "http://localhost:16686", "", Duration.ofSeconds(30)));
   }
 
   public static ServiceCatalogEntry serviceCatalogEntry() {
@@ -111,6 +134,18 @@ public final class TestFixtures {
             "error_rate", "sum(rate(http_requests_total{status=~\"5..\"}[5m]))",
             "latency", "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
             "cpu", "sum(rate(container_cpu_usage_seconds_total[5m]))",
-            "memory", "sum(container_memory_working_set_bytes)"));
+            "memory", "sum(container_memory_working_set_bytes)"),
+        "prodops",
+        "PAY",
+        "payments-api",
+        List.of("services/payments-api", "src/payments"),
+        "payments-api",
+        List.of("POST /payments", "POST /settlements"),
+        "service.name:payments-api",
+        "payments-*",
+        List.of("app.kubernetes.io/version", "version"),
+        List.of("app.kubernetes.io/version"),
+        List.of("payments-api"),
+        List.of("payments-ledger", "card-authz"));
   }
 }

@@ -22,3 +22,23 @@ services:
       latency: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
       cpu: sum(rate(container_cpu_usage_seconds_total[5m]))
       memory: sum(container_memory_working_set_bytes)
+    repoWorkspace: prodops
+    repoProject: PAY
+    repoSlug: payments-api
+    fileOwnershipPaths:
+      - services/payments-api
+      - src/payments
+    traceServiceName: payments-api
+    traceOperationHints:
+      - POST /payments
+    kibanaQuery: service.name:payments-api
+    kibanaDataView: payments-logs-*
+    versionLabelKeys:
+      - app.kubernetes.io/version
+      - version
+    deploymentLabelKeys:
+      - app.kubernetes.io/version
+    imageTagHints:
+      - payments-api
+    dependencyServiceIds:
+      - payments-ledger

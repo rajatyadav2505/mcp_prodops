@@ -5,10 +5,15 @@ import static org.mockito.Mockito.mock;
 
 import com.prodops.controltower.mcp.TestFixtures;
 import com.prodops.controltower.mcp.config.ProdOpsProperties;
+import com.prodops.controltower.mcp.domain.correlation.LogSignatureAnalyzer;
 import com.prodops.controltower.mcp.domain.port.DashboardPort;
+import com.prodops.controltower.mcp.domain.port.JaegerTracePort;
+import com.prodops.controltower.mcp.domain.port.KibanaLogPort;
 import com.prodops.controltower.mcp.domain.port.MetricsPort;
+import com.prodops.controltower.mcp.domain.port.ServiceCatalogPort;
 import com.prodops.controltower.mcp.policy.GuardrailViolationException;
 import com.prodops.controltower.mcp.policy.ScopePolicy;
+import com.prodops.controltower.mcp.redaction.RedactionService;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -34,8 +39,14 @@ class ObservabilityServiceTest {
                 Duration.ofMinutes(15),
                 250,
                 100,
+                100,
                 10,
                 200,
+                50,
+                200,
+                20,
+                60,
+                5,
                 false,
                 true),
             new ProdOpsProperties.CacheProperties(
@@ -60,8 +71,14 @@ class ObservabilityServiceTest {
         new ObservabilityService(
             mock(MetricsPort.class),
             mock(DashboardPort.class),
+            mock(KibanaLogPort.class),
+            mock(JaegerTracePort.class),
+            mock(ServiceCatalogPort.class),
             new ScopePolicy(disabledProperties),
-            disabledProperties);
+            disabledProperties,
+            new RedactionService(),
+            new LogSignatureAnalyzer(),
+            TestFixtures.fixedClock());
 
     assertThatThrownBy(
             () ->
@@ -83,8 +100,14 @@ class ObservabilityServiceTest {
         new ObservabilityService(
             mock(MetricsPort.class),
             mock(DashboardPort.class),
+            mock(KibanaLogPort.class),
+            mock(JaegerTracePort.class),
+            mock(ServiceCatalogPort.class),
             new ScopePolicy(properties),
-            properties);
+            properties,
+            new RedactionService(),
+            new LogSignatureAnalyzer(),
+            TestFixtures.fixedClock());
 
     assertThatThrownBy(
             () ->

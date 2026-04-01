@@ -28,6 +28,31 @@ services:
       memory: clamp_max(0.52,1)
       throttling: clamp_max(0.25,1)
       saturation: clamp_max(0.68,1)
+    repoWorkspace: prodops
+    repoProject: PRODOPS
+    repoSlug: payments-api
+    fileOwnershipPaths:
+      - src/main/java/com/prodops/payments
+      - src/main/resources/application
+    traceServiceName: payments-api
+    traceOperationHints:
+      - POST /api/payments
+      - GET /api/payments/{id}
+    kibanaQuery: service.name:"payments-api" OR kubernetes.labels.app:"payments-api"
+    kibanaDataView: prodops-logs
+    versionLabelKeys:
+      - app.kubernetes.io/version
+      - release
+      - image-tag
+    deploymentLabelKeys:
+      - app
+      - component
+    imageTagHints:
+      - payments-api
+      - payments
+    dependencyServiceIds:
+      - payments-ledger
+      - payments-notification
   - serviceId: upi-recon
     displayName: UPI Reconciliation
     cluster: prodops-uat
@@ -53,6 +78,31 @@ services:
       memory: clamp_max(0.79,1)
       throttling: clamp_max(0.61,1)
       saturation: clamp_max(0.89,1)
+    repoWorkspace: prodops
+    repoProject: PRODOPS
+    repoSlug: upi-recon
+    fileOwnershipPaths:
+      - src/main/java/com/prodops/upi/recon
+      - src/main/resources/application
+    traceServiceName: upi-recon
+    traceOperationHints:
+      - POST /upi/recon/process
+      - GET /upi/recon/status
+    kibanaQuery: service.name:"upi-recon" OR kubernetes.labels.app:"upi-recon"
+    kibanaDataView: prodops-logs
+    versionLabelKeys:
+      - app.kubernetes.io/version
+      - release
+      - image-tag
+    deploymentLabelKeys:
+      - app
+      - component
+    imageTagHints:
+      - upi-recon
+      - upi
+    dependencyServiceIds:
+      - upi-settlement
+      - upi-core
   - serviceId: tradex-gateway
     displayName: Tradex Gateway
     cluster: prodops-uat
@@ -78,3 +128,28 @@ services:
       memory: clamp_max(0.45,1)
       throttling: clamp_max(0.22,1)
       saturation: clamp_max(0.31,1)
+    repoWorkspace: prodops
+    repoProject: PRODOPS
+    repoSlug: tradex-gateway
+    fileOwnershipPaths:
+      - src/main/java/com/prodops/tradex/gateway
+      - src/main/resources/application
+    traceServiceName: tradex-gateway
+    traceOperationHints:
+      - POST /trade/orders
+      - GET /trade/orders/{id}
+    kibanaQuery: service.name:"tradex-gateway" OR kubernetes.labels.app:"tradex-gateway"
+    kibanaDataView: prodops-logs
+    versionLabelKeys:
+      - app.kubernetes.io/version
+      - release
+      - image-tag
+    deploymentLabelKeys:
+      - app
+      - component
+    imageTagHints:
+      - tradex-gateway
+      - tradex
+    dependencyServiceIds:
+      - tradex-pricing
+      - tradex-risk

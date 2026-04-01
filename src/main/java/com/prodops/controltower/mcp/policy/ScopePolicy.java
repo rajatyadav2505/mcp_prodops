@@ -62,10 +62,43 @@ public class ScopePolicy {
     }
   }
 
+  public void verifyLogHits(int requested) {
+    if (requested > properties.guardrails().maxLogHits()) {
+      throw new GuardrailViolationException("Requested log hit count exceeds configured maximum.");
+    }
+  }
+
   public void verifyDashboardLimit(int requested) {
     if (requested > properties.guardrails().maxDashboards()) {
       throw new GuardrailViolationException(
           "Requested dashboard count exceeds configured maximum.");
+    }
+  }
+
+  public void verifyTraceLimit(int requested) {
+    if (requested > properties.guardrails().maxTraces()) {
+      throw new GuardrailViolationException("Requested trace count exceeds configured maximum.");
+    }
+  }
+
+  public void verifyChangeCandidateLimit(int requested) {
+    if (requested > properties.guardrails().maxChangeCandidates()) {
+      throw new GuardrailViolationException(
+          "Requested change candidate count exceeds configured maximum.");
+    }
+  }
+
+  public void verifyEvidenceNodeLimit(int requested) {
+    if (requested > properties.guardrails().maxEvidenceNodes()) {
+      throw new GuardrailViolationException(
+          "Requested evidence node count exceeds configured maximum.");
+    }
+  }
+
+  public void verifySimilarIncidentLimit(int requested) {
+    if (requested > properties.guardrails().maxSimilarIncidents()) {
+      throw new GuardrailViolationException(
+          "Requested similar-incident count exceeds configured maximum.");
     }
   }
 

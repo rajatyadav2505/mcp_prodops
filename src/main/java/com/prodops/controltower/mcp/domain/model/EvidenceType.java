@@ -7,5 +7,12 @@ public enum EvidenceType {
   TOPOLOGY,
   ROLLOUT,
   LOG_EXCERPT,
+  LOG_SIGNATURE,
+  TRACE,
+  TRACE_SPAN,
+  CHANGE,
+  PIPELINE,
+  DEPENDENCY,
+  ROOT_CAUSE,
   POLICY
 }
