@@ -13,7 +13,7 @@
 
 ## What is novel here
 
-- It is not a thin wrapper around three APIs.
+- It is not a thin wrapper around individual upstream APIs.
 - It unifies runtime, metrics, dashboard, change, log, and trace planes into one deterministic evidence model.
 - It assembles cross-plane evidence packs with provenance, confidence, and counterevidence.
 - It uses transparent service risk scoring that operations teams can tune through YAML.

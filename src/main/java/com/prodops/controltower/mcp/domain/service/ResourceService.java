@@ -64,7 +64,10 @@ public class ResourceService {
             "Kubernetes API",
             "Prometheus HTTP API",
             "Grafana HTTP API",
-            "Curated YAML service catalog"),
+            "Bitbucket HTTP API",
+            "Kibana or Elasticsearch-compatible search API",
+            "Jaeger HTTP API",
+            "Curated YAML service catalog and risk weights"),
         List.of(
             "Namespaces",
             "Deployments",
@@ -78,12 +81,25 @@ public class ResourceService {
             "Ingress",
             "HPA",
             "PDB",
+            "NetworkPolicies",
             "Dashboard metadata",
-            "Metrics"),
-        List.of("get", "list", "watch", "pods/log (bounded and redacted)"),
+            "Metrics",
+            "Bitbucket commits, pull requests, changed files, and pipeline metadata",
+            "Kibana log events and signatures",
+            "Jaeger traces and spans"),
+        List.of(
+            "Kubernetes get, list, watch, and pods/log (bounded and redacted)",
+            "Prometheus query and query_range",
+            "Grafana dashboard search and retrieval",
+            "Bitbucket commit, pull-request, diffstat, and pipeline metadata reads",
+            "Kibana or Elasticsearch-compatible log search only",
+            "Jaeger trace search and detail retrieval"),
         List.of(
             "No create, update, patch, delete, restart, rollout trigger, exec, scale, annotate, cordon, drain, silence, acknowledge, save, import, or edit actions",
             "No Secret reads or Secret-value exposure",
+            "No Bitbucket merge, comment, pipeline trigger, or deployment trigger",
+            "No Kibana saved-object or alert writes",
+            "No Jaeger writes",
             "No kubectl shelling, exec, or port-forward"),
         List.of(
             "Bearer tokens, passwords, secret-like strings, and credential-bearing connection strings are redacted.",
@@ -105,8 +121,26 @@ public class ResourceService {
             "Did the latest rollout correlate with the latency spike in upi-recon?",
             "Change correlation"),
         new QuestionExample(
+            "Which Bitbucket change most likely broke payments-api in the last 60 minutes?",
+            "Explainable change attribution"),
+        new QuestionExample(
+            "Show the top Kibana error signatures for upi-recon and correlate them with Jaeger traces.",
+            "Cross-plane log and trace investigation"),
+        new QuestionExample(
+            "What is the real-time SLO burn rate and remaining error budget for payments-api?",
+            "SLO status and breach forecasting"),
+        new QuestionExample(
+            "Did the latest deploy make payments-api better or worse?",
+            "Pre/post deployment impact comparison"),
+        new QuestionExample(
+            "Is the tradex-gateway failure cascading into downstream services?",
+            "Dependency and cascade analysis"),
+        new QuestionExample(
             "What is the likely blast radius if tradex-gateway keeps failing?",
             "Blast radius estimation"),
+        new QuestionExample(
+            "Export the full incident timeline for the current payments-api outage.",
+            "Incident chronology and post-mortem support"),
         new QuestionExample(
             "Which critical services are closest to SLO risk today?", "Capacity and SLO review"),
         new QuestionExample(

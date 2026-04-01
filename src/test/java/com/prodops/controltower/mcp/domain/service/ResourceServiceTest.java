@@ -61,9 +61,14 @@ class ResourceServiceTest {
     assertThat(service.catalogRunbooks()).hasSize(1);
     assertThat(service.namespaceHealth("payments-dev", "payments", "alice"))
         .isEqualTo(namespaceHealth);
+    assertThat(service.readOnlyContract().upstreamSystems())
+        .contains("Bitbucket HTTP API", "Kibana or Elasticsearch-compatible search API");
     assertThat(service.readOnlyContract().prohibitedActions())
         .contains("No Secret reads or Secret-value exposure");
-    assertThat(service.exampleQuestions()).hasSize(6);
+    assertThat(service.exampleQuestions()).hasSize(12);
+    assertThat(service.exampleQuestions())
+        .extracting(question -> question.question())
+        .contains("Which Bitbucket change most likely broke payments-api in the last 60 minutes?");
 
     verify(serviceCatalogViewService, times(4)).listServices();
     verify(inventoryService)

@@ -163,6 +163,9 @@ flowchart LR
     SA --> APIServer["EKS Kubernetes API"]
     Pod --> PromURL["Prometheus base URL"]
     Pod --> GrafURL["Grafana base URL"]
+    Pod --> BbURL["Bitbucket base URL"]
+    Pod --> KibURL["Kibana base URL"]
+    Pod --> JaegerURL["Jaeger base URL"]
 ```
 
 How it works:
@@ -196,6 +199,8 @@ The EKS connection is the runtime truth plane. This server uses the Kubernetes A
 - warning events
 - services and ingresses
 - HPA and PDB
+- network policies
+- rollout revision history used by deployment intelligence
 - bounded `pods/log` reads
 
 This is not a `kubectl` shell-out model. The server uses the Java Kubernetes client directly.

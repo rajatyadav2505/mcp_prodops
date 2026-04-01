@@ -5,6 +5,9 @@
 - Kubernetes API
 - Prometheus HTTP API
 - Grafana HTTP API
+- Bitbucket HTTP API
+- Kibana or Elasticsearch-compatible search API
+- Jaeger HTTP API
 - Local YAML files for service catalog and risk weights
 
 ## Kubernetes objects in scope
@@ -21,7 +24,11 @@
 - Ingress resources
 - HorizontalPodAutoscalers
 - PodDisruptionBudgets
+- NetworkPolicies
 - Owner references and non-sensitive metadata
+- Bitbucket pull requests, commits, changed files, reviewers, and pipeline metadata
+- Kibana log events, signatures, and redacted excerpts
+- Jaeger traces, spans, and dependency edges
 - `pods/log` only when explicitly requested, bounded, and redacted
 
 ## Allowed verbs and API surfaces
@@ -29,6 +36,9 @@
 - Kubernetes: `get`, `list`, `watch`, and bounded `pods/log`
 - Prometheus: query and query_range over the HTTP API
 - Grafana: dashboard search and dashboard retrieval APIs only
+- Bitbucket: commit, pull-request, diffstat, and pipeline metadata reads only
+- Kibana: Discover-style search and Elasticsearch-compatible read queries only
+- Jaeger: trace search and trace detail retrieval only
 
 ## Explicitly prohibited
 
@@ -49,6 +59,9 @@
 - save
 - import
 - any dashboard write API
+- any Bitbucket merge, comment, pipeline trigger, or deployment trigger
+- any Kibana saved-object or alert write
+- any Jaeger write action
 - any Secret read or Secret-value exposure
 
 ## Redaction behavior
@@ -77,5 +90,5 @@ Redaction occurs before tool output assembly. Bounded log excerpts are sanitized
 - `ScopePolicy` denies out-of-scope clusters and namespaces.
 - `OriginValidationFilter` rejects invalid MCP origins.
 - `SecurityConfig` supports resource-server validation for HTTP deployments.
-- Adapter implementations expose only read paths.
+- Adapter implementations expose only read paths across Kubernetes, Prometheus, Grafana, Bitbucket, Kibana, and Jaeger.
 - Tests assert architecture boundaries, guardrails, redaction, and origin rejection.
