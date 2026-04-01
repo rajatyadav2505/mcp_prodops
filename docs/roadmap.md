@@ -1,24 +1,24 @@
 # Roadmap
 
-## What stays in scope now
+## Current state
 
-This repository is intentionally limited to one product domain: Production Support Intelligence. It should be productionized for Kubernetes, Prometheus, and Grafana first before it is generalized further.
+This repository is intentionally limited to one product domain: Production Support Intelligence. The current implementation already spans Kubernetes, Prometheus, Grafana, Bitbucket, Kibana, and Jaeger while keeping a hard read-only posture and deterministic reasoning model.
 
 ## Near-term roadmap
 
 ### Phase 1
 
-- Controlled non-prod rollout
-- Curated service-catalog expansion
-- Production auth integration
-- Additional evidence quality tuning for top critical services
+- Controlled live rollout and upstream hardening in non-prod
+- Curated service-catalog expansion for more services and teams
+- Production auth integration and network-policy hardening
+- Additional evidence-quality tuning for top critical services
 
 ### Phase 2
 
-- More service-specific PromQL templates
-- Stronger SLO-aware risk framing
 - Broader namespace coverage with explicit governance approval
-- Additional executive reporting prompts
+- More service-specific PromQL, Kibana, and trace hints
+- Richer fixture narratives for canary, drift, and security-posture scenarios
+- Deeper runbook and leadership-reporting packs
 
 ### Phase 3
 

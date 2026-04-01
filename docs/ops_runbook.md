@@ -24,6 +24,11 @@ Important runtime knobs:
 - `PRODOPS_JWT_ENABLED`
 - `PROMETHEUS_BASE_URL`
 - `GRAFANA_BASE_URL`
+- `BITBUCKET_BASE_URL`
+- `KIBANA_BASE_URL`
+- `KIBANA_ELASTICSEARCH_BASE_URL`
+- `KIBANA_DISCOVER_PATH`
+- `JAEGER_BASE_URL`
 - `KUBECONFIG`
 - `KUBE_CONTEXT`
 
@@ -57,6 +62,7 @@ In Kubernetes, readiness and liveness probes should use the management port.
 3. Inspect audit logs for repeated denials or rate-limit saturation.
 4. If only live adapters are failing, rerun in fixture mode to separate product defects from upstream reachability issues.
 5. Review token and origin configuration before widening access.
+6. If change, log, or trace evidence looks empty, verify the Bitbucket, Kibana, and Jaeger base URLs plus bearer-token references.
 
 ## Safe rollback
 

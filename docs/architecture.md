@@ -24,7 +24,7 @@ flowchart TB
       ResourceSvc["ResourceService"]
       PromptSvc["PromptTemplateService"]
       Scoring["RiskScoreEngine"]
-      Correlation["Change / Blast Radius / Capacity Engines"]
+      Correlation["RCA / Change / Topology / SLO / Timeline Engines"]
     end
 
     subgraph Controls["Cross-cutting Controls"]
@@ -39,6 +39,9 @@ flowchart TB
       K8s["ClusterInventoryPort\nFixture or Live Kubernetes"]
       Prom["MetricsPort\nFixture or Live Prometheus"]
       Graf["DashboardPort\nFixture or Live Grafana"]
+      Bitbucket["BitbucketPort\nFixture or Live Bitbucket"]
+      Kibana["KibanaLogPort\nFixture or Live Kibana"]
+      Jaeger["JaegerTracePort\nFixture or Live Jaeger"]
       Catalog["ServiceCatalogPort / RiskWeightsPort"]
     end
 
@@ -56,7 +59,7 @@ sequenceDiagram
     participant MCP as MCP Tool Method
     participant Policy as Policy + Audit + Rate Limit
     participant Domain as Domain Service
-    participant Adapters as K8s / Prom / Grafana Adapters
+    participant Adapters as K8s / Prom / Graf / Bitbucket / Kibana / Jaeger Adapters
 
     Client->>HTTP: MCP request
     HTTP->>Policy: Origin, auth, correlation id, rate limit
