@@ -166,4 +166,105 @@ public class ProdOpsPrompts {
                 promptTemplateService.capacityRiskReview(
                     cluster, namespaceOrScope, horizonMinutes)));
   }
+
+  @McpPrompt(
+      name = "post_mortem_assistant",
+      title = "Post-mortem assistant",
+      description = "Guide a blameless post-mortem with timeline, root cause, and follow-ups.")
+  public GetPromptResult postMortemAssistant(
+      @McpArg(name = "cluster", description = "Cluster name", required = true) String cluster,
+      @McpArg(name = "namespace", description = "Namespace name", required = true) String namespace,
+      @McpArg(
+              name = "service_or_workload",
+              description = "Service ID or workload name",
+              required = true)
+          String serviceOrWorkload,
+      @McpArg(name = "lookback_minutes", description = "Lookback minutes", required = true)
+          int lookbackMinutes) {
+    return invocationSupport.invoke(
+        "prompt",
+        "post_mortem_assistant",
+        ArgumentMap.of(
+            "cluster", cluster,
+            "namespace", namespace,
+            "service_or_workload", serviceOrWorkload,
+            "lookback_minutes", lookbackMinutes),
+        () ->
+            contentSupport.prompt(
+                "Post-mortem assistant",
+                promptTemplateService.postMortemAssistant(
+                    cluster, namespace, serviceOrWorkload, lookbackMinutes)));
+  }
+
+  @McpPrompt(
+      name = "runbook_executor_guide",
+      title = "Runbook executor guide",
+      description = "Walk through a runbook step-by-step with live read-only verification.")
+  public GetPromptResult runbookExecutorGuide(
+      @McpArg(name = "cluster", description = "Cluster name", required = true) String cluster,
+      @McpArg(name = "namespace", description = "Namespace name", required = true) String namespace,
+      @McpArg(
+              name = "service_or_workload",
+              description = "Service ID or workload name",
+              required = true)
+          String serviceOrWorkload) {
+    return invocationSupport.invoke(
+        "prompt",
+        "runbook_executor_guide",
+        ArgumentMap.of(
+            "cluster", cluster, "namespace", namespace, "service_or_workload", serviceOrWorkload),
+        () ->
+            contentSupport.prompt(
+                "Runbook executor guide",
+                promptTemplateService.runbookExecutorGuide(cluster, namespace, serviceOrWorkload)));
+  }
+
+  @McpPrompt(
+      name = "war_room_briefing",
+      title = "War room briefing",
+      description =
+          "Generate a real-time incident briefing with impact, evidence, and next watchpoints.")
+  public GetPromptResult warRoomBriefing(
+      @McpArg(name = "cluster", description = "Cluster name", required = true) String cluster,
+      @McpArg(name = "namespace", description = "Namespace name", required = true) String namespace,
+      @McpArg(
+              name = "service_or_workload",
+              description = "Service ID or workload name",
+              required = true)
+          String serviceOrWorkload,
+      @McpArg(name = "lookback_minutes", description = "Lookback minutes", required = true)
+          int lookbackMinutes) {
+    return invocationSupport.invoke(
+        "prompt",
+        "war_room_briefing",
+        ArgumentMap.of(
+            "cluster", cluster,
+            "namespace", namespace,
+            "service_or_workload", serviceOrWorkload,
+            "lookback_minutes", lookbackMinutes),
+        () ->
+            contentSupport.prompt(
+                "War room briefing",
+                promptTemplateService.warRoomBriefing(
+                    cluster, namespace, serviceOrWorkload, lookbackMinutes)));
+  }
+
+  @McpPrompt(
+      name = "weekly_ops_report",
+      title = "Weekly ops report",
+      description =
+          "Aggregate incidents, deploys, SLO posture, toil, and top risks for a weekly summary.")
+  public GetPromptResult weeklyOpsReport(
+      @McpArg(name = "cluster", description = "Cluster name", required = true) String cluster,
+      @McpArg(name = "lookback_hours", description = "Lookback hours", required = true)
+          int lookbackHours) {
+    return invocationSupport.invoke(
+        "prompt",
+        "weekly_ops_report",
+        ArgumentMap.of("cluster", cluster, "lookback_hours", lookbackHours),
+        () ->
+            contentSupport.prompt(
+                "Weekly ops report",
+                promptTemplateService.weeklyOpsReport(cluster, lookbackHours)));
+  }
 }

@@ -102,6 +102,34 @@ public class ScopePolicy {
     }
   }
 
+  public void verifyTopologyNodeLimit(int requested) {
+    if (requested > properties.guardrails().maxTopologyNodes()) {
+      throw new GuardrailViolationException(
+          "Requested topology node count exceeds configured maximum.");
+    }
+  }
+
+  public void verifyAlertGroupLimit(int requested) {
+    if (requested > properties.guardrails().maxAlertGroups()) {
+      throw new GuardrailViolationException(
+          "Requested alert-group count exceeds configured maximum.");
+    }
+  }
+
+  public void verifyTimelineEntryLimit(int requested) {
+    if (requested > properties.guardrails().maxTimelineEntries()) {
+      throw new GuardrailViolationException(
+          "Requested timeline entry count exceeds configured maximum.");
+    }
+  }
+
+  public void verifyClusterComparisonLimit(int requested) {
+    if (requested > properties.guardrails().maxComparisonClusters()) {
+      throw new GuardrailViolationException(
+          "Requested cluster comparison count exceeds configured maximum.");
+    }
+  }
+
   public void assertAllowed(PolicyDecision decision) {
     if (!decision.allowed()) {
       throw new PolicyDeniedException(decision.reason());

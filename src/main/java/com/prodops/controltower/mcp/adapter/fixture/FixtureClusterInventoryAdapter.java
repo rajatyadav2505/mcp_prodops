@@ -5,8 +5,10 @@ import com.prodops.controltower.mcp.domain.model.HpaInfo;
 import com.prodops.controltower.mcp.domain.model.IngressInfo;
 import com.prodops.controltower.mcp.domain.model.LogExcerpt;
 import com.prodops.controltower.mcp.domain.model.NamespaceInfo;
+import com.prodops.controltower.mcp.domain.model.NetworkPolicyInfo;
 import com.prodops.controltower.mcp.domain.model.PdbInfo;
 import com.prodops.controltower.mcp.domain.model.PodInfo;
+import com.prodops.controltower.mcp.domain.model.RolloutRevision;
 import com.prodops.controltower.mcp.domain.model.ServiceInfo;
 import com.prodops.controltower.mcp.domain.model.WarningEvent;
 import com.prodops.controltower.mcp.domain.model.WorkloadInfo;
@@ -120,6 +122,14 @@ public class FixtureClusterInventoryAdapter implements ClusterInventoryPort {
   }
 
   @Override
+  public List<NetworkPolicyInfo> listNetworkPolicies(String cluster, String namespace) {
+    return loader.loadRepository().networkPolicies().stream()
+        .filter(policy -> policy.cluster().equals(cluster))
+        .filter(policy -> policy.namespace().equals(namespace))
+        .toList();
+  }
+
+  @Override
   public Optional<HpaInfo> getHpa(String cluster, String namespace, String workloadName) {
     return loader.loadRepository().hpas().stream()
         .filter(hpa -> hpa.cluster().equals(cluster))
@@ -138,6 +148,49 @@ public class FixtureClusterInventoryAdapter implements ClusterInventoryPort {
   }
 
   @Override
+  public List<RolloutRevision> listRolloutRevisions(
+      String cluster, String namespace, String workloadName, WorkloadKind workloadKind) {
+    List<RolloutRevision> explicit =
+        loader.loadRepository().rolloutRevisions().stream()
+            .filter(revision -> revision.cluster().equals(cluster))
+            .filter(revision -> revision.namespace().equals(namespace))
+            .filter(revision -> revision.workloadName().equals(workloadName))
+            .filter(revision -> revision.workloadKind() == workloadKind)
+            .toList();
+    if (!explicit.isEmpty()) {
+      return explicit;
+    }
+    return loader.loadRepository().workloads().stream()
+        .filter(workload -> workload.cluster().equals(cluster))
+        .filter(workload -> workload.namespace().equals(namespace))
+        .filter(workload -> workload.name().equals(workloadName))
+        .filter(workload -> workload.kind() == workloadKind)
+        .findFirst()
+        .map(
+            workload ->
+                List.of(
+                    new RolloutRevision(
+                        cluster,
+                        namespace,
+                        workloadName,
+                        workloadKind,
+                        workload.revision(),
+                        workload.image(),
+                        versionTag(workload.labels()),
+                        workload.desiredReplicas(),
+                        workload.readyReplicas(),
+                        workload.readyReplicas() != null
+                                && workload.desiredReplicas() != null
+                                && workload.readyReplicas() >= workload.desiredReplicas()
+                            ? "complete"
+                            : "incomplete",
+                        workload.updatedAt() == null
+                            ? workload.createdAt()
+                            : workload.updatedAt())))
+        .orElse(List.of());
+  }
+
+  @Override
   public Optional<LogExcerpt> getPodLogs(
       String cluster,
       String namespace,
@@ -149,5 +202,13 @@ public class FixtureClusterInventoryAdapter implements ClusterInventoryPort {
         .filter(log -> log.podName().equals(podName))
         .filter(log -> log.container().equals(container))
         .findFirst();
+  }
+
+  private String versionTag(java.util.Map<String, String> labels) {
+    return java.util.List.of("app.kubernetes.io/version", "release", "image-tag").stream()
+        .map(labels::get)
+        .filter(value -> value != null && !value.isBlank())
+        .findFirst()
+        .orElse(null);
   }
 }

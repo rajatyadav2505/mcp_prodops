@@ -1,9 +1,13 @@
 package com.prodops.controltower.mcp.domain.service;
 
 import com.prodops.controltower.mcp.config.ProdOpsProperties;
+import com.prodops.controltower.mcp.domain.correlation.LogAnomalyAnalyzer;
+import com.prodops.controltower.mcp.domain.correlation.LogPatternAnalyzer;
 import com.prodops.controltower.mcp.domain.correlation.LogSignatureAnalyzer;
 import com.prodops.controltower.mcp.domain.model.DashboardInfo;
 import com.prodops.controltower.mcp.domain.model.DataFreshness;
+import com.prodops.controltower.mcp.domain.model.ErrorPatternSummary;
+import com.prodops.controltower.mcp.domain.model.LogAnomalySummary;
 import com.prodops.controltower.mcp.domain.model.LogEvent;
 import com.prodops.controltower.mcp.domain.model.LogSearchQuery;
 import com.prodops.controltower.mcp.domain.model.LogSearchResult;
@@ -40,6 +44,8 @@ public class ObservabilityService {
   private final ProdOpsProperties properties;
   private final RedactionService redactionService;
   private final LogSignatureAnalyzer logSignatureAnalyzer;
+  private final LogPatternAnalyzer logPatternAnalyzer;
+  private final LogAnomalyAnalyzer logAnomalyAnalyzer;
   private final Clock clock;
 
   public ObservabilityService(
@@ -52,6 +58,8 @@ public class ObservabilityService {
       ProdOpsProperties properties,
       RedactionService redactionService,
       LogSignatureAnalyzer logSignatureAnalyzer,
+      LogPatternAnalyzer logPatternAnalyzer,
+      LogAnomalyAnalyzer logAnomalyAnalyzer,
       Clock clock) {
     this.metricsPort = metricsPort;
     this.dashboardPort = dashboardPort;
@@ -62,6 +70,8 @@ public class ObservabilityService {
     this.properties = properties;
     this.redactionService = redactionService;
     this.logSignatureAnalyzer = logSignatureAnalyzer;
+    this.logPatternAnalyzer = logPatternAnalyzer;
+    this.logAnomalyAnalyzer = logAnomalyAnalyzer;
     this.clock = clock;
   }
 
@@ -192,6 +202,106 @@ public class ObservabilityService {
         errorsOnly,
         traceId,
         identity);
+  }
+
+  public ErrorPatternSummary searchErrorPatterns(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      Duration lookback,
+      String identity) {
+    LogSearchResult result =
+        searchKibanaLogs(
+            cluster,
+            namespace,
+            serviceOrWorkload,
+            lookback,
+            "ERROR",
+            null,
+            null,
+            null,
+            null,
+            identity);
+    List<ErrorPatternSummary.ErrorPatternMatch> matches =
+        logPatternAnalyzer.summarize(result.events(), 6);
+    return new ErrorPatternSummary(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        matches.isEmpty()
+            ? "No common deterministic error patterns were found in the selected log window."
+            : "Detected "
+                + matches.size()
+                + " recurring error patterns, led by "
+                + matches.getFirst().pattern()
+                + ".",
+        "Pattern search matched sanitized Kibana events against common operational failure signatures.",
+        matches,
+        result.deepLinks(),
+        Instant.now(clock),
+        result.dataFreshness());
+  }
+
+  public LogAnomalySummary logAnomalySummary(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      Duration recentWindow,
+      Duration baselineWindow,
+      String identity) {
+    scopePolicy.assertAllowed(scopePolicy.authorizeNamespace(cluster, namespace, identity));
+    scopePolicy.verifyLookback(recentWindow);
+    scopePolicy.verifyLookback(baselineWindow);
+    Instant end = Instant.now(clock);
+    LogSearchResult recent =
+        searchKibanaLogsWindow(
+            cluster,
+            namespace,
+            serviceOrWorkload,
+            end.minus(recentWindow),
+            end,
+            "ERROR",
+            null,
+            null,
+            null,
+            null,
+            identity);
+    LogSearchResult baseline =
+        searchKibanaLogsWindow(
+            cluster,
+            namespace,
+            serviceOrWorkload,
+            end.minus(recentWindow).minus(baselineWindow),
+            end.minus(recentWindow),
+            "ERROR",
+            null,
+            null,
+            null,
+            null,
+            identity);
+    LogAnomalyAnalyzer.Assessment assessment =
+        logAnomalyAnalyzer.analyze(
+            recent.totalHits(),
+            baseline.totalHits(),
+            recentWindow.toMinutes(),
+            baselineWindow.toMinutes(),
+            recent.topSignatures());
+    return new LogAnomalySummary(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        assessment.anomalyRatio() >= 2.0d
+            ? "Error log volume is anomalously elevated relative to baseline."
+            : "Error log volume is within the expected recent baseline range.",
+        "Anomaly detection compared recent and baseline log windows using deterministic moving-rate ratios.",
+        recent.totalHits(),
+        assessment.recentPerMinute(),
+        assessment.baselinePerMinute(),
+        assessment.anomalyRatio(),
+        assessment.dominantRecentSignatures(),
+        recent.deepLinks(),
+        Instant.now(clock),
+        recent.dataFreshness());
   }
 
   public LogSearchResult searchKibanaLogsWindow(

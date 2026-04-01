@@ -14,8 +14,10 @@ import com.prodops.controltower.mcp.domain.model.MetricSeries;
 import com.prodops.controltower.mcp.domain.model.MetricSeriesPoint;
 import com.prodops.controltower.mcp.domain.model.MetricValue;
 import com.prodops.controltower.mcp.domain.model.NamespaceInfo;
+import com.prodops.controltower.mcp.domain.model.NetworkPolicyInfo;
 import com.prodops.controltower.mcp.domain.model.PdbInfo;
 import com.prodops.controltower.mcp.domain.model.PodInfo;
+import com.prodops.controltower.mcp.domain.model.RolloutRevision;
 import com.prodops.controltower.mcp.domain.model.ServiceCatalogEntry;
 import com.prodops.controltower.mcp.domain.model.ServiceInfo;
 import com.prodops.controltower.mcp.domain.model.TraceSummary;
@@ -49,8 +51,10 @@ public class FixtureScenarioLoader {
     List<WarningEvent> warningEvents = new ArrayList<>();
     List<ServiceInfo> services = new ArrayList<>();
     List<IngressInfo> ingresses = new ArrayList<>();
+    List<NetworkPolicyInfo> networkPolicies = new ArrayList<>();
     List<HpaInfo> hpas = new ArrayList<>();
     List<PdbInfo> pdbs = new ArrayList<>();
+    List<RolloutRevision> rolloutRevisions = new ArrayList<>();
     List<DashboardInfo> dashboards = new ArrayList<>();
     List<FixtureMetricBundle> metrics = new ArrayList<>();
     List<LogExcerpt> logs = new ArrayList<>();
@@ -72,8 +76,10 @@ public class FixtureScenarioLoader {
         warningEvents.addAll(orEmpty(document.warningEvents()));
         services.addAll(orEmpty(document.services()));
         ingresses.addAll(orEmpty(document.ingresses()));
+        networkPolicies.addAll(orEmpty(document.networkPolicies()));
         hpas.addAll(orEmpty(document.hpas()));
         pdbs.addAll(orEmpty(document.pdbs()));
+        rolloutRevisions.addAll(orEmpty(document.rolloutRevisions()));
         dashboards.addAll(orEmpty(document.dashboards()));
         metrics.addAll(orEmpty(document.metrics()));
         logs.addAll(orEmpty(document.logs()));
@@ -128,8 +134,10 @@ public class FixtureScenarioLoader {
         warningEvents,
         services,
         ingresses,
+        networkPolicies,
         hpas,
         pdbs,
+        rolloutRevisions,
         dashboards,
         metrics,
         logs,
@@ -149,8 +157,10 @@ public class FixtureScenarioLoader {
       List<WarningEvent> warningEvents,
       List<ServiceInfo> services,
       List<IngressInfo> ingresses,
+      List<NetworkPolicyInfo> networkPolicies,
       List<HpaInfo> hpas,
       List<PdbInfo> pdbs,
+      List<RolloutRevision> rolloutRevisions,
       List<DashboardInfo> dashboards,
       List<FixtureMetricBundle> metrics,
       List<LogExcerpt> logs,
@@ -178,8 +188,10 @@ public class FixtureScenarioLoader {
       List<WarningEvent> warningEvents,
       List<ServiceInfo> services,
       List<IngressInfo> ingresses,
+      List<NetworkPolicyInfo> networkPolicies,
       List<HpaInfo> hpas,
       List<PdbInfo> pdbs,
+      List<RolloutRevision> rolloutRevisions,
       List<DashboardInfo> dashboards,
       List<FixtureMetricBundle> metrics,
       List<LogExcerpt> logs,

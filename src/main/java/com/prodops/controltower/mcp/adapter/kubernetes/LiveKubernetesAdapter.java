@@ -6,15 +6,18 @@ import com.prodops.controltower.mcp.domain.model.HpaInfo;
 import com.prodops.controltower.mcp.domain.model.IngressInfo;
 import com.prodops.controltower.mcp.domain.model.LogExcerpt;
 import com.prodops.controltower.mcp.domain.model.NamespaceInfo;
+import com.prodops.controltower.mcp.domain.model.NetworkPolicyInfo;
 import com.prodops.controltower.mcp.domain.model.ObjectReference;
 import com.prodops.controltower.mcp.domain.model.PdbInfo;
 import com.prodops.controltower.mcp.domain.model.PodInfo;
+import com.prodops.controltower.mcp.domain.model.RolloutRevision;
 import com.prodops.controltower.mcp.domain.model.ServiceInfo;
 import com.prodops.controltower.mcp.domain.model.WarningEvent;
 import com.prodops.controltower.mcp.domain.model.WorkloadInfo;
 import com.prodops.controltower.mcp.domain.model.WorkloadKind;
 import com.prodops.controltower.mcp.domain.port.ClusterInventoryPort;
 import io.kubernetes.client.PodLogs;
+import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.apis.AutoscalingV2Api;
@@ -27,13 +30,19 @@ import io.kubernetes.client.openapi.models.CoreV1EventList;
 import io.kubernetes.client.openapi.models.V1ContainerStatus;
 import io.kubernetes.client.openapi.models.V1CronJobList;
 import io.kubernetes.client.openapi.models.V1DaemonSetList;
+import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1DeploymentList;
 import io.kubernetes.client.openapi.models.V1JobList;
 import io.kubernetes.client.openapi.models.V1NamespaceList;
+import io.kubernetes.client.openapi.models.V1NetworkPolicy;
+import io.kubernetes.client.openapi.models.V1NetworkPolicyList;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1OwnerReference;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodList;
+import io.kubernetes.client.openapi.models.V1PodSpec;
+import io.kubernetes.client.openapi.models.V1PodTemplateSpec;
+import io.kubernetes.client.openapi.models.V1ReplicaSetList;
 import io.kubernetes.client.openapi.models.V1StatefulSetList;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -235,6 +244,20 @@ public class LiveKubernetesAdapter implements ClusterInventoryPort {
   }
 
   @Override
+  public List<NetworkPolicyInfo> listNetworkPolicies(String cluster, String namespace) {
+    NetworkingV1Api api = new NetworkingV1Api(clientFactory.clientFor(cluster));
+    try {
+      V1NetworkPolicyList policies = api.listNamespacedNetworkPolicy(namespace).execute();
+      return policies.getItems().stream()
+          .map(policy -> toNetworkPolicy(cluster, namespace, policy))
+          .toList();
+    } catch (ApiException exception) {
+      throw new IllegalStateException(
+          "Failed to list Kubernetes NetworkPolicy resources.", exception);
+    }
+  }
+
+  @Override
   public Optional<HpaInfo> getHpa(String cluster, String namespace, String workloadName) {
     AutoscalingV2Api api = new AutoscalingV2Api(clientFactory.clientFor(cluster));
     try {
@@ -278,6 +301,19 @@ public class LiveKubernetesAdapter implements ClusterInventoryPort {
     } catch (ApiException exception) {
       throw new IllegalStateException("Failed to read Kubernetes PDB resources.", exception);
     }
+  }
+
+  @Override
+  public List<RolloutRevision> listRolloutRevisions(
+      String cluster, String namespace, String workloadName, WorkloadKind workloadKind) {
+    return switch (workloadKind) {
+      case DEPLOYMENT -> deploymentRolloutRevisions(cluster, namespace, workloadName);
+      default ->
+          getWorkload(cluster, namespace, workloadName, workloadKind)
+              .map(this::singleRevision)
+              .map(List::of)
+              .orElse(List.of());
+    };
   }
 
   @Override
@@ -330,7 +366,19 @@ public class LiveKubernetesAdapter implements ClusterInventoryPort {
                       metadataLabels(deployment.getMetadata())
                           .getOrDefault(teamLabelKey(cluster), "unknown"),
                       metadataLabels(deployment.getMetadata())
-                          .getOrDefault(criticalityLabelKey(cluster), "standard")))
+                          .getOrDefault(criticalityLabelKey(cluster), "standard"),
+                      metadataAnnotations(deployment.getMetadata())
+                          .getOrDefault("deployment.kubernetes.io/revision", null),
+                      primaryImage(deployment.getSpec().getTemplate()),
+                      imageCreatedAt(deployment.getSpec().getTemplate(), deployment.getMetadata()),
+                      requestedCpuCores(deployment.getSpec().getTemplate()),
+                      requestedMemoryBytes(deployment.getSpec().getTemplate()),
+                      limitCpuCores(deployment.getSpec().getTemplate()),
+                      limitMemoryBytes(deployment.getSpec().getTemplate()),
+                      runAsNonRoot(deployment.getSpec().getTemplate()),
+                      privileged(deployment.getSpec().getTemplate()),
+                      hostNetwork(deployment.getSpec().getTemplate()),
+                      hasReadinessProbe(deployment.getSpec().getTemplate())))
           .toList();
     } catch (ApiException exception) {
       throw new IllegalStateException("Failed to list Kubernetes Deployments.", exception);
@@ -361,7 +409,19 @@ public class LiveKubernetesAdapter implements ClusterInventoryPort {
                       metadataLabels(set.getMetadata())
                           .getOrDefault(teamLabelKey(cluster), "unknown"),
                       metadataLabels(set.getMetadata())
-                          .getOrDefault(criticalityLabelKey(cluster), "standard")))
+                          .getOrDefault(criticalityLabelKey(cluster), "standard"),
+                      Optional.ofNullable(set.getStatus().getUpdateRevision())
+                          .orElse(set.getStatus().getCurrentRevision()),
+                      primaryImage(set.getSpec().getTemplate()),
+                      imageCreatedAt(set.getSpec().getTemplate(), set.getMetadata()),
+                      requestedCpuCores(set.getSpec().getTemplate()),
+                      requestedMemoryBytes(set.getSpec().getTemplate()),
+                      limitCpuCores(set.getSpec().getTemplate()),
+                      limitMemoryBytes(set.getSpec().getTemplate()),
+                      runAsNonRoot(set.getSpec().getTemplate()),
+                      privileged(set.getSpec().getTemplate()),
+                      hostNetwork(set.getSpec().getTemplate()),
+                      hasReadinessProbe(set.getSpec().getTemplate())))
           .toList();
     } catch (ApiException exception) {
       throw new IllegalStateException("Failed to list Kubernetes StatefulSets.", exception);
@@ -391,7 +451,18 @@ public class LiveKubernetesAdapter implements ClusterInventoryPort {
                       metadataLabels(job.getMetadata())
                           .getOrDefault(teamLabelKey(cluster), "unknown"),
                       metadataLabels(job.getMetadata())
-                          .getOrDefault(criticalityLabelKey(cluster), "standard")))
+                          .getOrDefault(criticalityLabelKey(cluster), "standard"),
+                      String.valueOf(job.getMetadata().getGeneration()),
+                      primaryImage(job.getSpec().getTemplate()),
+                      imageCreatedAt(job.getSpec().getTemplate(), job.getMetadata()),
+                      requestedCpuCores(job.getSpec().getTemplate()),
+                      requestedMemoryBytes(job.getSpec().getTemplate()),
+                      limitCpuCores(job.getSpec().getTemplate()),
+                      limitMemoryBytes(job.getSpec().getTemplate()),
+                      runAsNonRoot(job.getSpec().getTemplate()),
+                      privileged(job.getSpec().getTemplate()),
+                      hostNetwork(job.getSpec().getTemplate()),
+                      hasReadinessProbe(job.getSpec().getTemplate())))
           .toList();
     } catch (ApiException exception) {
       throw new IllegalStateException("Failed to list Kubernetes Jobs.", exception);
@@ -423,7 +494,18 @@ public class LiveKubernetesAdapter implements ClusterInventoryPort {
                       metadataLabels(daemonSet.getMetadata())
                           .getOrDefault(teamLabelKey(cluster), "unknown"),
                       metadataLabels(daemonSet.getMetadata())
-                          .getOrDefault(criticalityLabelKey(cluster), "standard")))
+                          .getOrDefault(criticalityLabelKey(cluster), "standard"),
+                      String.valueOf(daemonSet.getMetadata().getGeneration()),
+                      primaryImage(daemonSet.getSpec().getTemplate()),
+                      imageCreatedAt(daemonSet.getSpec().getTemplate(), daemonSet.getMetadata()),
+                      requestedCpuCores(daemonSet.getSpec().getTemplate()),
+                      requestedMemoryBytes(daemonSet.getSpec().getTemplate()),
+                      limitCpuCores(daemonSet.getSpec().getTemplate()),
+                      limitMemoryBytes(daemonSet.getSpec().getTemplate()),
+                      runAsNonRoot(daemonSet.getSpec().getTemplate()),
+                      privileged(daemonSet.getSpec().getTemplate()),
+                      hostNetwork(daemonSet.getSpec().getTemplate()),
+                      hasReadinessProbe(daemonSet.getSpec().getTemplate())))
           .toList();
     } catch (ApiException exception) {
       throw new IllegalStateException("Failed to list Kubernetes DaemonSets.", exception);
@@ -459,7 +541,22 @@ public class LiveKubernetesAdapter implements ClusterInventoryPort {
                       metadataLabels(cronJob.getMetadata())
                           .getOrDefault(teamLabelKey(cluster), "unknown"),
                       metadataLabels(cronJob.getMetadata())
-                          .getOrDefault(criticalityLabelKey(cluster), "standard")))
+                          .getOrDefault(criticalityLabelKey(cluster), "standard"),
+                      String.valueOf(cronJob.getMetadata().getGeneration()),
+                      primaryImage(cronJob.getSpec().getJobTemplate().getSpec().getTemplate()),
+                      imageCreatedAt(
+                          cronJob.getSpec().getJobTemplate().getSpec().getTemplate(),
+                          cronJob.getMetadata()),
+                      requestedCpuCores(cronJob.getSpec().getJobTemplate().getSpec().getTemplate()),
+                      requestedMemoryBytes(
+                          cronJob.getSpec().getJobTemplate().getSpec().getTemplate()),
+                      limitCpuCores(cronJob.getSpec().getJobTemplate().getSpec().getTemplate()),
+                      limitMemoryBytes(cronJob.getSpec().getJobTemplate().getSpec().getTemplate()),
+                      runAsNonRoot(cronJob.getSpec().getJobTemplate().getSpec().getTemplate()),
+                      privileged(cronJob.getSpec().getJobTemplate().getSpec().getTemplate()),
+                      hostNetwork(cronJob.getSpec().getJobTemplate().getSpec().getTemplate()),
+                      hasReadinessProbe(
+                          cronJob.getSpec().getJobTemplate().getSpec().getTemplate())))
           .toList();
     } catch (ApiException exception) {
       throw new IllegalStateException("Failed to list Kubernetes CronJobs.", exception);
@@ -500,8 +597,12 @@ public class LiveKubernetesAdapter implements ClusterInventoryPort {
         containerStates,
         lastTerminationReason,
         pod.getMetadata().getCreationTimestamp().toInstant(),
-        new ObjectReference(
-            cluster, namespace, ownerReference.getKind(), ownerReference.getName()));
+        new ObjectReference(cluster, namespace, ownerReference.getKind(), ownerReference.getName()),
+        metadataLabels(pod.getMetadata()),
+        Optional.ofNullable(pod.getSpec()).map(V1PodSpec::getContainers).orElse(List.of()).stream()
+            .findFirst()
+            .map(container -> container.getImage())
+            .orElse(null));
   }
 
   private String selector(Map<String, String> selector) {
@@ -512,6 +613,259 @@ public class LiveKubernetesAdapter implements ClusterInventoryPort {
 
   private Map<String, String> metadataLabels(V1ObjectMeta metadata) {
     return Optional.ofNullable(metadata.getLabels()).orElse(Map.of());
+  }
+
+  private Map<String, String> metadataAnnotations(V1ObjectMeta metadata) {
+    return Optional.ofNullable(metadata.getAnnotations()).orElse(Map.of());
+  }
+
+  private List<RolloutRevision> deploymentRolloutRevisions(
+      String cluster, String namespace, String workloadName) {
+    AppsV1Api api = new AppsV1Api(clientFactory.clientFor(cluster));
+    try {
+      V1Deployment deployment = api.readNamespacedDeployment(workloadName, namespace).execute();
+      Map<String, String> selector =
+          Optional.ofNullable(deployment.getSpec().getSelector().getMatchLabels()).orElse(Map.of());
+      V1ReplicaSetList replicaSets =
+          api.listNamespacedReplicaSet(namespace).labelSelector(selector(selector)).execute();
+      return replicaSets.getItems().stream()
+          .filter(
+              replicaSet ->
+                  Optional.ofNullable(replicaSet.getMetadata().getOwnerReferences())
+                      .orElse(List.of())
+                      .stream()
+                      .anyMatch(
+                          owner ->
+                              "Deployment".equals(owner.getKind())
+                                  && workloadName.equals(owner.getName())))
+          .map(
+              replicaSet ->
+                  new RolloutRevision(
+                      cluster,
+                      namespace,
+                      workloadName,
+                      WorkloadKind.DEPLOYMENT,
+                      metadataAnnotations(replicaSet.getMetadata())
+                          .getOrDefault("deployment.kubernetes.io/revision", "unknown"),
+                      primaryImage(replicaSet.getSpec().getTemplate()),
+                      versionTag(metadataLabels(replicaSet.getSpec().getTemplate().getMetadata())),
+                      replicaSet.getSpec().getReplicas(),
+                      Optional.ofNullable(replicaSet.getStatus().getReadyReplicas()).orElse(0),
+                      Optional.ofNullable(replicaSet.getStatus().getReadyReplicas()).orElse(0)
+                              >= Optional.ofNullable(replicaSet.getSpec().getReplicas()).orElse(0)
+                          ? "complete"
+                          : "incomplete",
+                      replicaSet.getMetadata().getCreationTimestamp().toInstant()))
+          .sorted(java.util.Comparator.comparing(RolloutRevision::rolledOutAt).reversed())
+          .toList();
+    } catch (ApiException exception) {
+      throw new IllegalStateException("Failed to read rollout revision history.", exception);
+    }
+  }
+
+  private RolloutRevision singleRevision(WorkloadInfo workload) {
+    return new RolloutRevision(
+        workload.cluster(),
+        workload.namespace(),
+        workload.name(),
+        workload.kind(),
+        workload.revision(),
+        workload.image(),
+        versionTag(workload.labels()),
+        workload.desiredReplicas(),
+        workload.readyReplicas(),
+        workload.readyReplicas() != null
+                && workload.desiredReplicas() != null
+                && workload.readyReplicas() >= workload.desiredReplicas()
+            ? "complete"
+            : "incomplete",
+        Optional.ofNullable(workload.updatedAt()).orElse(workload.createdAt()));
+  }
+
+  private NetworkPolicyInfo toNetworkPolicy(
+      String cluster, String namespace, V1NetworkPolicy policy) {
+    List<String> policyTypes =
+        Optional.ofNullable(policy.getSpec().getPolicyTypes()).orElse(List.of()).stream().toList();
+    return new NetworkPolicyInfo(
+        cluster,
+        namespace,
+        policy.getMetadata().getName(),
+        Optional.ofNullable(policy.getSpec().getPodSelector())
+            .map(selector -> selector.getMatchLabels())
+            .orElse(Map.of()),
+        policyTypes,
+        Optional.ofNullable(policy.getSpec().getIngress()).orElse(List.of()).size(),
+        Optional.ofNullable(policy.getSpec().getEgress()).orElse(List.of()).size(),
+        policyTypes.contains("Ingress")
+            && Optional.ofNullable(policy.getSpec().getIngress()).orElse(List.of()).isEmpty(),
+        policyTypes.contains("Egress")
+            && Optional.ofNullable(policy.getSpec().getEgress()).orElse(List.of()).isEmpty());
+  }
+
+  private String primaryImage(V1PodTemplateSpec template) {
+    return Optional.ofNullable(template)
+        .map(V1PodTemplateSpec::getSpec)
+        .map(V1PodSpec::getContainers)
+        .orElse(List.of())
+        .stream()
+        .findFirst()
+        .map(container -> container.getImage())
+        .orElse(null);
+  }
+
+  private Instant imageCreatedAt(V1PodTemplateSpec template, V1ObjectMeta metadata) {
+    for (String key :
+        List.of(
+            "prodops.image.createdAt",
+            "app.kubernetes.io/build-timestamp",
+            "image.created-at",
+            "build-timestamp")) {
+      String value =
+          metadataAnnotations(
+                  Optional.ofNullable(template)
+                      .map(V1PodTemplateSpec::getMetadata)
+                      .orElse(metadata))
+              .get(key);
+      if (value == null || value.isBlank()) {
+        value =
+            metadataLabels(
+                    Optional.ofNullable(template)
+                        .map(V1PodTemplateSpec::getMetadata)
+                        .orElse(metadata))
+                .get(key);
+      }
+      if (value != null && !value.isBlank()) {
+        try {
+          return Instant.parse(value);
+        } catch (RuntimeException ignored) {
+          return null;
+        }
+      }
+    }
+    return null;
+  }
+
+  private Double requestedCpuCores(V1PodTemplateSpec template) {
+    return sumQuantity(template, true, true);
+  }
+
+  private Double requestedMemoryBytes(V1PodTemplateSpec template) {
+    return sumQuantity(template, true, false);
+  }
+
+  private Double limitCpuCores(V1PodTemplateSpec template) {
+    return sumQuantity(template, false, true);
+  }
+
+  private Double limitMemoryBytes(V1PodTemplateSpec template) {
+    return sumQuantity(template, false, false);
+  }
+
+  private Double sumQuantity(V1PodTemplateSpec template, boolean requests, boolean cpu) {
+    double total =
+        Optional.ofNullable(template)
+            .map(V1PodTemplateSpec::getSpec)
+            .map(V1PodSpec::getContainers)
+            .orElse(List.of())
+            .stream()
+            .map(container -> container.getResources())
+            .filter(resources -> resources != null)
+            .map(resources -> requests ? resources.getRequests() : resources.getLimits())
+            .filter(values -> values != null)
+            .mapToDouble(
+                values -> {
+                  Quantity quantity = values.get(cpu ? "cpu" : "memory");
+                  return quantity == null ? 0.0d : parseQuantity(quantity.toSuffixedString(), cpu);
+                })
+            .sum();
+    return total > 0.0d ? total : null;
+  }
+
+  private Boolean runAsNonRoot(V1PodTemplateSpec template) {
+    Boolean podLevel =
+        Optional.ofNullable(template)
+            .map(V1PodTemplateSpec::getSpec)
+            .map(V1PodSpec::getSecurityContext)
+            .map(context -> context.getRunAsNonRoot())
+            .orElse(null);
+    if (podLevel != null) {
+      return podLevel;
+    }
+    return Optional.ofNullable(template)
+        .map(V1PodTemplateSpec::getSpec)
+        .map(V1PodSpec::getContainers)
+        .orElse(List.of())
+        .stream()
+        .map(container -> container.getSecurityContext())
+        .filter(context -> context != null && context.getRunAsNonRoot() != null)
+        .map(context -> context.getRunAsNonRoot())
+        .findFirst()
+        .orElse(null);
+  }
+
+  private Boolean privileged(V1PodTemplateSpec template) {
+    return Optional.ofNullable(template)
+        .map(V1PodTemplateSpec::getSpec)
+        .map(V1PodSpec::getContainers)
+        .orElse(List.of())
+        .stream()
+        .map(container -> container.getSecurityContext())
+        .filter(context -> context != null && context.getPrivileged() != null)
+        .map(context -> context.getPrivileged())
+        .findFirst()
+        .orElse(Boolean.FALSE);
+  }
+
+  private Boolean hostNetwork(V1PodTemplateSpec template) {
+    return Optional.ofNullable(template)
+        .map(V1PodTemplateSpec::getSpec)
+        .map(spec -> spec.getHostNetwork())
+        .orElse(Boolean.FALSE);
+  }
+
+  private Boolean hasReadinessProbe(V1PodTemplateSpec template) {
+    return Optional.ofNullable(template)
+        .map(V1PodTemplateSpec::getSpec)
+        .map(V1PodSpec::getContainers)
+        .orElse(List.of())
+        .stream()
+        .anyMatch(container -> container.getReadinessProbe() != null);
+  }
+
+  private String versionTag(Map<String, String> labels) {
+    return List.of("app.kubernetes.io/version", "release", "image-tag").stream()
+        .map(labels::get)
+        .filter(value -> value != null && !value.isBlank())
+        .findFirst()
+        .orElse(null);
+  }
+
+  private double parseQuantity(String raw, boolean cpu) {
+    if (raw == null || raw.isBlank()) {
+      return 0.0d;
+    }
+    String value = raw.trim();
+    if (cpu && value.endsWith("m")) {
+      return Double.parseDouble(value.substring(0, value.length() - 1)) / 1000.0d;
+    }
+    if (!cpu) {
+      for (Map.Entry<String, Double> suffix :
+          Map.of(
+                  "Ki", 1024d,
+                  "Mi", 1024d * 1024d,
+                  "Gi", 1024d * 1024d * 1024d,
+                  "Ti", 1024d * 1024d * 1024d * 1024d,
+                  "K", 1000d,
+                  "M", 1000d * 1000d,
+                  "G", 1000d * 1000d * 1000d)
+              .entrySet()) {
+        if (value.endsWith(suffix.getKey())) {
+          return Double.parseDouble(value.substring(0, value.length() - suffix.getKey().length()))
+              * suffix.getValue();
+        }
+      }
+    }
+    return Double.parseDouble(value);
   }
 
   private String state(V1ContainerStatus status) {

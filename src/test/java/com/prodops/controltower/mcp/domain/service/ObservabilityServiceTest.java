@@ -5,6 +5,8 @@ import static org.mockito.Mockito.mock;
 
 import com.prodops.controltower.mcp.TestFixtures;
 import com.prodops.controltower.mcp.config.ProdOpsProperties;
+import com.prodops.controltower.mcp.domain.correlation.LogAnomalyAnalyzer;
+import com.prodops.controltower.mcp.domain.correlation.LogPatternAnalyzer;
 import com.prodops.controltower.mcp.domain.correlation.LogSignatureAnalyzer;
 import com.prodops.controltower.mcp.domain.port.DashboardPort;
 import com.prodops.controltower.mcp.domain.port.JaegerTracePort;
@@ -47,6 +49,10 @@ class ObservabilityServiceTest {
                 20,
                 60,
                 5,
+                30,
+                20,
+                150,
+                5,
                 false,
                 true),
             new ProdOpsProperties.CacheProperties(
@@ -78,6 +84,8 @@ class ObservabilityServiceTest {
             disabledProperties,
             new RedactionService(),
             new LogSignatureAnalyzer(),
+            new LogPatternAnalyzer(),
+            new LogAnomalyAnalyzer(),
             TestFixtures.fixedClock());
 
     assertThatThrownBy(
@@ -107,6 +115,8 @@ class ObservabilityServiceTest {
             properties,
             new RedactionService(),
             new LogSignatureAnalyzer(),
+            new LogPatternAnalyzer(),
+            new LogAnomalyAnalyzer(),
             TestFixtures.fixedClock());
 
     assertThatThrownBy(

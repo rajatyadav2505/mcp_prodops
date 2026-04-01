@@ -1,6 +1,8 @@
 package com.prodops.controltower.mcp.mcp.tools;
 
 import com.prodops.controltower.mcp.domain.model.DashboardInfo;
+import com.prodops.controltower.mcp.domain.model.ErrorPatternSummary;
+import com.prodops.controltower.mcp.domain.model.LogAnomalySummary;
 import com.prodops.controltower.mcp.domain.model.LogSearchResult;
 import com.prodops.controltower.mcp.domain.model.PromqlExecutionResult;
 import com.prodops.controltower.mcp.domain.model.TraceSearchResult;
@@ -259,5 +261,63 @@ public class ObservabilityTools {
         () ->
             observabilityService.getJaegerTraceSummary(
                 cluster, traceId, invocationSupport.identity()));
+  }
+
+  @McpTool(
+      name = "search_error_patterns",
+      description =
+          "Search Kibana logs for recurring operational error patterns like OOM, connection refused, timeout, and null-pointer signatures.")
+  public ErrorPatternSummary searchErrorPatterns(
+      @McpToolParam(description = "Cluster name") String cluster,
+      @McpToolParam(description = "Namespace name") String namespace,
+      @McpToolParam(description = "Service ID or workload name") String serviceOrWorkload,
+      @McpToolParam(description = "Lookback minutes") @jakarta.validation.constraints.Min(1)
+          int lookbackMinutes) {
+    return invocationSupport.invoke(
+        "tool",
+        "search_error_patterns",
+        ArgumentMap.of(
+            "cluster", cluster,
+            "namespace", namespace,
+            "serviceOrWorkload", serviceOrWorkload,
+            "lookbackMinutes", lookbackMinutes),
+        () ->
+            observabilityService.searchErrorPatterns(
+                cluster,
+                namespace,
+                serviceOrWorkload,
+                Duration.ofMinutes(lookbackMinutes),
+                invocationSupport.identity()));
+  }
+
+  @McpTool(
+      name = "log_anomaly_summary",
+      description =
+          "Compare recent Kibana error-log volume against a deterministic baseline window and summarize anomalies.")
+  public LogAnomalySummary logAnomalySummary(
+      @McpToolParam(description = "Cluster name") String cluster,
+      @McpToolParam(description = "Namespace name") String namespace,
+      @McpToolParam(description = "Service ID or workload name") String serviceOrWorkload,
+      @McpToolParam(description = "Recent lookback minutes") @jakarta.validation.constraints.Min(1)
+          int lookbackMinutes,
+      @McpToolParam(description = "Baseline window minutes") @jakarta.validation.constraints.Min(1)
+          int baselineMinutes) {
+    return invocationSupport.invoke(
+        "tool",
+        "log_anomaly_summary",
+        ArgumentMap.of(
+            "cluster", cluster,
+            "namespace", namespace,
+            "serviceOrWorkload", serviceOrWorkload,
+            "lookbackMinutes", lookbackMinutes,
+            "baselineMinutes", baselineMinutes),
+        () ->
+            observabilityService.logAnomalySummary(
+                cluster,
+                namespace,
+                serviceOrWorkload,
+                Duration.ofMinutes(lookbackMinutes),
+                Duration.ofMinutes(baselineMinutes),
+                invocationSupport.identity()));
   }
 }

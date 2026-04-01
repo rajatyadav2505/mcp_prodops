@@ -36,4 +36,16 @@ class ScopePolicyTest {
     assertThatThrownBy(() -> policy.verifyLookback(Duration.ofHours(12)))
         .isInstanceOf(GuardrailViolationException.class);
   }
+
+  @Test
+  void rejectsWaveTwoGuardrailViolations() {
+    assertThatThrownBy(() -> policy.verifyTopologyNodeLimit(999))
+        .isInstanceOf(GuardrailViolationException.class);
+    assertThatThrownBy(() -> policy.verifyAlertGroupLimit(999))
+        .isInstanceOf(GuardrailViolationException.class);
+    assertThatThrownBy(() -> policy.verifyTimelineEntryLimit(9999))
+        .isInstanceOf(GuardrailViolationException.class);
+    assertThatThrownBy(() -> policy.verifyClusterComparisonLimit(99))
+        .isInstanceOf(GuardrailViolationException.class);
+  }
 }

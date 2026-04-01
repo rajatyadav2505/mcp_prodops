@@ -42,28 +42,72 @@
       "createdAt": "2026-03-24T12:00:00Z",
       "updatedAt": "2026-03-24T23:30:00Z",
       "ownerTeam": "payments-platform",
-      "criticality": "critical"
+      "criticality": "critical",
+      "revision": "118",
+      "image": "registry.example.invalid/payments-api:3b2f1a9",
+      "imageCreatedAt": "2026-03-20T10:00:00Z",
+      "requestedCpuCores": 1.0,
+      "requestedMemoryBytes": 1073741824,
+      "limitCpuCores": 2.0,
+      "limitMemoryBytes": 2147483648,
+      "runAsNonRoot": true,
+      "privileged": false,
+      "hostNetwork": false,
+      "hasReadinessProbe": true
     }
   ],
   "pods": [
     {
       "cluster": "payments-dev",
       "namespace": "payments",
-      "name": "payments-api-7d4f6f7c6d-abc12",
+      "name": "payments-api-7d4f6f7c6d-stable1",
       "phase": "Running",
       "ready": true,
-      "restartCount": 1,
+      "restartCount": 0,
       "containerStates": [
         "ready"
       ],
-      "lastTerminationReason": "CrashLoopBackOff",
+      "lastTerminationReason": "none",
       "createdAt": "2026-03-24T23:15:00Z",
       "ownerReference": {
         "cluster": "payments-dev",
         "namespace": "payments",
         "kind": "Deployment",
         "name": "payments-api"
-      }
+      },
+      "labels": {
+        "app": "payments-api",
+        "owner-team": "payments-platform",
+        "track": "stable",
+        "app.kubernetes.io/version": "3b2f1a9"
+      },
+      "image": "registry.example.invalid/payments-api:3b2f1a9"
+    },
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "name": "payments-api-7d4f6f7c6d-canary1",
+      "phase": "Running",
+      "ready": false,
+      "restartCount": 3,
+      "containerStates": [
+        "app:CrashLoopBackOff"
+      ],
+      "lastTerminationReason": "CrashLoopBackOff",
+      "createdAt": "2026-03-24T23:25:00Z",
+      "ownerReference": {
+        "cluster": "payments-dev",
+        "namespace": "payments",
+        "kind": "Deployment",
+        "name": "payments-api"
+      },
+      "labels": {
+        "app": "payments-api",
+        "owner-team": "payments-platform",
+        "track": "canary",
+        "app.kubernetes.io/version": "3b2f1aa"
+      },
+      "image": "registry.example.invalid/payments-api:3b2f1aa"
     }
   ],
   "warningEvents": [
@@ -77,6 +121,28 @@
       "count": 1,
       "firstTimestamp": "2026-03-24T23:40:00Z",
       "lastTimestamp": "2026-03-24T23:45:00Z"
+    },
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "reason": "ScalingReplicaSet",
+      "message": "Scaled canary replica set to 1 while rollout analysis continued.",
+      "involvedKind": "Deployment",
+      "involvedName": "payments-api",
+      "count": 2,
+      "firstTimestamp": "2026-03-24T23:32:00Z",
+      "lastTimestamp": "2026-03-24T23:36:00Z"
+    },
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "reason": "Unhealthy",
+      "message": "Readiness probe failed for canary pod payments-api-7d4f6f7c6d-canary1.",
+      "involvedKind": "Pod",
+      "involvedName": "payments-api",
+      "count": 4,
+      "firstTimestamp": "2026-03-24T23:41:00Z",
+      "lastTimestamp": "2026-03-24T23:49:00Z"
     }
   ],
   "services": [
@@ -103,6 +169,24 @@
       ]
     }
   ],
+  "networkPolicies": [
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "name": "payments-api-allow-ledger",
+      "podSelector": {
+        "app": "payments-api"
+      },
+      "policyTypes": [
+        "Ingress",
+        "Egress"
+      ],
+      "ingressRuleCount": 1,
+      "egressRuleCount": 1,
+      "defaultDenyIngress": false,
+      "defaultDenyEgress": false
+    }
+  ],
   "hpas": [
     {
       "cluster": "payments-dev",
@@ -122,6 +206,34 @@
       "minAvailable": "2",
       "maxUnavailable": "1",
       "disruptionsAllowed": 1
+    }
+  ],
+  "rolloutRevisions": [
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "workloadName": "payments-api",
+      "workloadKind": "DEPLOYMENT",
+      "revision": "117",
+      "image": "registry.example.invalid/payments-api:9c7d2ef",
+      "versionTag": "9c7d2ef",
+      "desiredReplicas": 3,
+      "readyReplicas": 3,
+      "status": "complete",
+      "rolledOutAt": "2026-03-24T20:21:00Z"
+    },
+    {
+      "cluster": "payments-dev",
+      "namespace": "payments",
+      "workloadName": "payments-api",
+      "workloadKind": "DEPLOYMENT",
+      "revision": "118",
+      "image": "registry.example.invalid/payments-api:3b2f1a9",
+      "versionTag": "3b2f1a9",
+      "desiredReplicas": 3,
+      "readyReplicas": 2,
+      "status": "incomplete",
+      "rolledOutAt": "2026-03-24T23:24:00Z"
     }
   ],
   "dashboards": [
@@ -197,6 +309,110 @@
       ],
       "series": [
         {
+          "name": "error_rate_ratio",
+          "query": "sum(rate(http_requests_total{status=~\"5..\"}[5m]))",
+          "unit": "ratio",
+          "labels": {
+            "job": "payments-api"
+          },
+          "points": [
+            {
+              "timestamp": "2026-03-24T23:00:00Z",
+              "value": 0.12
+            },
+            {
+              "timestamp": "2026-03-24T23:15:00Z",
+              "value": 0.22
+            },
+            {
+              "timestamp": "2026-03-24T23:30:00Z",
+              "value": 0.52
+            },
+            {
+              "timestamp": "2026-03-24T23:45:00Z",
+              "value": 0.85
+            }
+          ]
+        },
+        {
+          "name": "latency_slo_ratio",
+          "query": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+          "unit": "ratio",
+          "labels": {
+            "job": "payments-api"
+          },
+          "points": [
+            {
+              "timestamp": "2026-03-24T23:00:00Z",
+              "value": 0.25
+            },
+            {
+              "timestamp": "2026-03-24T23:15:00Z",
+              "value": 0.35
+            },
+            {
+              "timestamp": "2026-03-24T23:30:00Z",
+              "value": 0.61
+            },
+            {
+              "timestamp": "2026-03-24T23:45:00Z",
+              "value": 0.75
+            }
+          ]
+        },
+        {
+          "name": "cpu_saturation_ratio",
+          "query": "sum(rate(container_cpu_usage_seconds_total[5m]))",
+          "unit": "ratio",
+          "labels": {
+            "job": "payments-api"
+          },
+          "points": [
+            {
+              "timestamp": "2026-03-24T23:00:00Z",
+              "value": 0.25
+            },
+            {
+              "timestamp": "2026-03-24T23:15:00Z",
+              "value": 0.31
+            },
+            {
+              "timestamp": "2026-03-24T23:30:00Z",
+              "value": 0.42
+            },
+            {
+              "timestamp": "2026-03-24T23:45:00Z",
+              "value": 0.60
+            }
+          ]
+        },
+        {
+          "name": "memory_pressure_ratio",
+          "query": "sum(container_memory_working_set_bytes)",
+          "unit": "ratio",
+          "labels": {
+            "job": "payments-api"
+          },
+          "points": [
+            {
+              "timestamp": "2026-03-24T23:00:00Z",
+              "value": 0.20
+            },
+            {
+              "timestamp": "2026-03-24T23:15:00Z",
+              "value": 0.28
+            },
+            {
+              "timestamp": "2026-03-24T23:30:00Z",
+              "value": 0.36
+            },
+            {
+              "timestamp": "2026-03-24T23:45:00Z",
+              "value": 0.40
+            }
+          ]
+        },
+        {
           "name": "forecast-cpu",
           "query": "forecast_cpu_payments-api",
           "unit": "ratio",
@@ -213,13 +429,65 @@
               "value": 0.6
             }
           ]
+        },
+        {
+          "name": "cpu_usage_cores",
+          "query": "sum(rate(container_cpu_usage_seconds_total{namespace=\"payments\",pod=~\"payments-api-.*\",container!=\"POD\"}[5m]))",
+          "unit": "cores",
+          "labels": {
+            "job": "payments-api"
+          },
+          "points": [
+            {
+              "timestamp": "2026-03-24T23:00:00Z",
+              "value": 0.08
+            },
+            {
+              "timestamp": "2026-03-24T23:15:00Z",
+              "value": 0.10
+            },
+            {
+              "timestamp": "2026-03-24T23:30:00Z",
+              "value": 0.14
+            },
+            {
+              "timestamp": "2026-03-24T23:45:00Z",
+              "value": 0.16
+            }
+          ]
+        },
+        {
+          "name": "memory_working_set_bytes",
+          "query": "sum(container_memory_working_set_bytes{namespace=\"payments\",pod=~\"payments-api-.*\",container!=\"POD\"})",
+          "unit": "bytes",
+          "labels": {
+            "job": "payments-api"
+          },
+          "points": [
+            {
+              "timestamp": "2026-03-24T23:00:00Z",
+              "value": 1.2e8
+            },
+            {
+              "timestamp": "2026-03-24T23:15:00Z",
+              "value": 1.4e8
+            },
+            {
+              "timestamp": "2026-03-24T23:30:00Z",
+              "value": 1.5e8
+            },
+            {
+              "timestamp": "2026-03-24T23:45:00Z",
+              "value": 1.6e8
+            }
+          ]
         }
       ]
     }
   ],
   "logs": [
     {
-      "podName": "payments-api-7d4f6f7c6d-abc12",
+      "podName": "payments-api-7d4f6f7c6d-canary1",
       "container": "app",
       "collectedAt": "2026-03-24T23:55:00Z",
       "lines": [
@@ -330,7 +598,7 @@
       "cluster": "payments-dev",
       "namespace": "payments",
       "serviceOrWorkload": "payments-api",
-      "podName": "payments-api-7d4f6f7c6d-abc12",
+      "podName": "payments-api-7d4f6f7c6d-canary1",
       "container": "app",
       "severity": "ERROR",
       "message": "IllegalStateException: settlement route schema is incompatible with release 3b2f1a9",
@@ -395,7 +663,7 @@
               "duration": "PT0.480S",
               "error": true,
               "retry": false,
-              "podName": "payments-api-7d4f6f7c6d-abc12",
+              "podName": "payments-api-7d4f6f7c6d-canary1",
               "versionTag": "3b2f1a9",
               "tags": {
                 "service.version": "3b2f1a9",
@@ -413,7 +681,7 @@
               "duration": "PT0.480S",
               "error": true,
               "retry": false,
-              "podName": "payments-api-7d4f6f7c6d-abc12",
+              "podName": "payments-api-7d4f6f7c6d-canary1",
               "versionTag": "3b2f1a9",
               "tags": {
                 "service.version": "3b2f1a9"
@@ -435,7 +703,7 @@
             "description": "Open trace trace-pay-1"
           },
           "versionTag": "3b2f1a9",
-          "podName": "payments-api-7d4f6f7c6d-abc12"
+          "podName": "payments-api-7d4f6f7c6d-canary1"
         }
       ]
     }

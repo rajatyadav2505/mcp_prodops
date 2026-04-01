@@ -148,6 +148,10 @@ class LiveBitbucketAdapterTest {
             20,
             60,
             5,
+            30,
+            20,
+            150,
+            5,
             true,
             true),
         new ProdOpsProperties.CacheProperties(

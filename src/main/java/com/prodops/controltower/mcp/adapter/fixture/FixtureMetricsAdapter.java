@@ -95,9 +95,11 @@ public class FixtureMetricsAdapter implements MetricsPort {
                         || (normalizedQuery.contains("histogram_quantile")
                             && metric.name().equals("latency_slo_ratio"))
                         || (normalizedQuery.contains("container_cpu")
-                            && metric.name().equals("cpu_saturation_ratio"))
+                            && (metric.name().equals("cpu_usage_cores")
+                                || metric.name().equals("cpu_saturation_ratio")))
                         || (normalizedQuery.contains("container_memory")
-                            && metric.name().equals("memory_pressure_ratio")))
+                            && (metric.name().equals("memory_working_set_bytes")
+                                || metric.name().equals("memory_pressure_ratio"))))
             .toList();
     if (!hintedMatches.isEmpty()) {
       return hintedMatches;

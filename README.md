@@ -58,6 +58,10 @@ flowchart LR
 - `get_workload_health`
 - `get_pod_diagnostics`
 - `get_recent_warning_events`
+- `check_ingress_health`
+- `check_network_policies`
+- `security_posture_scan`
+- `image_freshness_check`
 
 ### Metrics and dashboards
 
@@ -65,11 +69,15 @@ flowchart LR
 - `run_promql_range`
 - `search_dashboards`
 - `get_dashboard_summary`
+- `check_slo_status`
+- `slo_breach_forecast`
 
 ### Log and trace intelligence
 
 - `search_kibana_logs`
 - `summarize_kibana_errors`
+- `search_error_patterns`
+- `log_anomaly_summary`
 - `search_jaeger_traces`
 - `get_jaeger_trace_summary`
 
@@ -84,8 +92,29 @@ flowchart LR
 - `find_similar_incidents`
 - `get_observability_coverage_gaps`
 - `forecast_capacity_risk`
+- `map_service_dependencies`
+- `detect_cascading_failure`
+- `compare_pre_post_deploy`
+- `rollout_history`
+- `canary_health_check`
+- `alert_noise_analysis`
+- `alert_correlation_groups`
+- `identify_resource_waste`
+- `right_sizing_recommendations`
+- `compare_clusters`
+- `cross_cluster_drift`
+- `daily_risk_trend`
+- `incident_timeline_export`
+- `toil_estimation`
 
 Every flagship tool returns structured evidence, confidence, links, limitations, and freshness metadata.
+
+### Prompt packs
+
+- `post_mortem_assistant`
+- `runbook_executor_guide`
+- `war_room_briefing`
+- `weekly_ops_report`
 
 ## Repository layout
 
@@ -127,9 +156,9 @@ Every flagship tool returns structured evidence, confidence, links, limitations,
 Useful narrower commands:
 
 ```bash
-./mvnw spotless:apply
-./mvnw test
-./mvnw -DskipTests package
+./mvnw -B -ntp spotless:apply
+./mvnw -B -ntp test
+./mvnw -B -ntp -DskipTests package
 ```
 
 ## Run in fixture mode over HTTP
@@ -222,6 +251,28 @@ Then connect the inspector to `http://127.0.0.1:8080/mcp`.
 - Compare the impact before and after commit `XYZ` on `tradex-gateway`.
 - Find similar incidents to the current outage.
 - Where are our observability blind spots for root cause attribution?
+- What is the real-time SLO burn rate and remaining error budget for `payments-api`?
+- At the current burn rate, when will `payments-api` breach its availability SLO?
+- What depends on `payments-api`, and what does it depend on?
+- Is the `tradex-gateway` failure cascading into downstream services?
+- Which workloads are wasting the most CPU and memory in `payments-uat`?
+- What right-sizing recommendations do you have for `payments-uat` over the last 6 hours?
+- Did the latest deploy make `payments-api` better or worse?
+- Show the recent rollout history for `payments-api` and correlate revisions with metric shifts.
+- Is the canary for `payments-api` healthier or worse than stable?
+- Which alerts are mostly noise versus actionable signals in `tradex-edge`?
+- Group the last 47 warning alerts into distinct incidents.
+- What error patterns are showing up in `payments-api` logs right now?
+- Is log volume for `payments-api` anomalous compared with the prior baseline window?
+- Are all ingress endpoints in `payments-uat` healthy?
+- Is `payments-api` network-isolated or effectively open?
+- What is the security posture score for workloads in `payments-uat`?
+- Which workloads are running images older than 14 days?
+- How does `payments-uat` compare to `payments-prod` right now?
+- Is `payments-api` running the same image, revision, and resources in UAT and PROD?
+- Is the `payments` namespace getting healthier or worse over the last 6 hours?
+- Export the full cross-plane incident timeline for `payments-api`.
+- Which namespace or team is carrying the most operational toil this week?
 - What is the likely blast radius if `tradex-gateway` keeps failing?
 - Which critical services are closest to SLO risk today?
 - Give me a CTO summary of the top five production risks in the last 24 hours.

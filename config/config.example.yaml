@@ -24,6 +24,10 @@ prodops:
       max-change-candidates: 20
       max-evidence-nodes: 100
       max-similar-incidents: 5
+      max-topology-nodes: 30
+      max-alert-groups: 20
+      max-timeline-entries: 150
+      max-comparison-clusters: 5
       raw-promql-enabled: true
       require-origin-validation: true
     cache:

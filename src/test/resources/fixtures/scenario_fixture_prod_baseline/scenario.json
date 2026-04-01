@@ -1,0 +1,276 @@
+{
+  "cluster": {
+    "name": "payments-prod",
+    "environment": "prod",
+    "kubernetesVersion": "configured",
+    "region": "configured",
+    "metadata": {
+      "owner-team": "payments-platform",
+      "criticality": "critical"
+    }
+  },
+  "namespaces": [
+    {
+      "cluster": "payments-prod",
+      "name": "payments",
+      "labels": {
+        "owner-team": "payments-platform",
+        "criticality": "critical"
+      },
+      "ownerTeam": "payments-platform",
+      "criticality": "critical",
+      "critical": true
+    }
+  ],
+  "workloads": [
+    {
+      "cluster": "payments-prod",
+      "namespace": "payments",
+      "name": "payments-api",
+      "kind": "DEPLOYMENT",
+      "labels": {
+        "app": "payments-api",
+        "owner-team": "payments-platform",
+        "criticality": "critical",
+        "app.kubernetes.io/version": "4c8d000"
+      },
+      "selector": {
+        "app": "payments-api"
+      },
+      "desiredReplicas": 4,
+      "readyReplicas": 4,
+      "createdAt": "2026-03-24T12:00:00Z",
+      "updatedAt": "2026-03-24T22:20:00Z",
+      "ownerTeam": "payments-platform",
+      "criticality": "critical",
+      "revision": "120",
+      "image": "registry.example.invalid/payments-api:4c8d000",
+      "imageCreatedAt": "2026-03-23T09:00:00Z",
+      "requestedCpuCores": 0.75,
+      "requestedMemoryBytes": 805306368,
+      "limitCpuCores": 1.5,
+      "limitMemoryBytes": 1610612736,
+      "runAsNonRoot": true,
+      "privileged": false,
+      "hostNetwork": false,
+      "hasReadinessProbe": true
+    }
+  ],
+  "pods": [
+    {
+      "cluster": "payments-prod",
+      "namespace": "payments",
+      "name": "payments-api-8f6d7c9d4f-prod1",
+      "phase": "Running",
+      "ready": true,
+      "restartCount": 0,
+      "containerStates": [
+        "ready"
+      ],
+      "lastTerminationReason": "none",
+      "createdAt": "2026-03-24T22:10:00Z",
+      "ownerReference": {
+        "cluster": "payments-prod",
+        "namespace": "payments",
+        "kind": "Deployment",
+        "name": "payments-api"
+      },
+      "labels": {
+        "app": "payments-api",
+        "owner-team": "payments-platform",
+        "track": "stable",
+        "app.kubernetes.io/version": "4c8d000"
+      },
+      "image": "registry.example.invalid/payments-api:4c8d000"
+    }
+  ],
+  "warningEvents": [],
+  "services": [
+    {
+      "cluster": "payments-prod",
+      "namespace": "payments",
+      "name": "payments-api",
+      "type": "ClusterIP",
+      "selector": {
+        "app": "payments-api"
+      }
+    }
+  ],
+  "ingresses": [
+    {
+      "cluster": "payments-prod",
+      "namespace": "payments",
+      "name": "payments-api",
+      "hosts": [
+        "payments.prod.example.invalid"
+      ],
+      "backendServices": [
+        "payments-api"
+      ]
+    }
+  ],
+  "networkPolicies": [
+    {
+      "cluster": "payments-prod",
+      "namespace": "payments",
+      "name": "payments-api-default-deny",
+      "podSelector": {
+        "app": "payments-api"
+      },
+      "policyTypes": [
+        "Ingress",
+        "Egress"
+      ],
+      "ingressRuleCount": 1,
+      "egressRuleCount": 1,
+      "defaultDenyIngress": false,
+      "defaultDenyEgress": false
+    }
+  ],
+  "hpas": [
+    {
+      "cluster": "payments-prod",
+      "namespace": "payments",
+      "name": "payments-api",
+      "minReplicas": 3,
+      "maxReplicas": 8,
+      "currentReplicas": 4,
+      "scaleConstrained": false
+    }
+  ],
+  "pdbs": [
+    {
+      "cluster": "payments-prod",
+      "namespace": "payments",
+      "name": "payments-api",
+      "minAvailable": "3",
+      "maxUnavailable": "1",
+      "disruptionsAllowed": 1
+    }
+  ],
+  "rolloutRevisions": [
+    {
+      "cluster": "payments-prod",
+      "namespace": "payments",
+      "workloadName": "payments-api",
+      "workloadKind": "DEPLOYMENT",
+      "revision": "120",
+      "image": "registry.example.invalid/payments-api:4c8d000",
+      "versionTag": "4c8d000",
+      "desiredReplicas": 4,
+      "readyReplicas": 4,
+      "status": "complete",
+      "rolledOutAt": "2026-03-24T22:20:00Z"
+    }
+  ],
+  "dashboards": [],
+  "metrics": [
+    {
+      "cluster": "payments-prod",
+      "namespace": "payments",
+      "scope": "payments-api",
+      "goldenSignals": [
+        {
+          "name": "error_rate_ratio",
+          "unit": "ratio",
+          "value": 0.08,
+          "status": "normal",
+          "observedAt": "2026-03-24T23:50:00Z",
+          "query": "error_rate",
+          "explanation": "Prod baseline error rate"
+        },
+        {
+          "name": "latency_slo_ratio",
+          "unit": "ratio",
+          "value": 0.18,
+          "status": "normal",
+          "observedAt": "2026-03-24T23:50:00Z",
+          "query": "latency",
+          "explanation": "Prod baseline latency"
+        },
+        {
+          "name": "cpu_saturation_ratio",
+          "unit": "ratio",
+          "value": 0.32,
+          "status": "normal",
+          "observedAt": "2026-03-24T23:50:00Z",
+          "query": "cpu",
+          "explanation": "Prod baseline cpu"
+        },
+        {
+          "name": "memory_pressure_ratio",
+          "unit": "ratio",
+          "value": 0.24,
+          "status": "normal",
+          "observedAt": "2026-03-24T23:50:00Z",
+          "query": "memory",
+          "explanation": "Prod baseline memory"
+        }
+      ],
+      "series": [
+        {
+          "name": "error_rate_ratio",
+          "query": "sum(rate(http_requests_total{status=~\"5..\"}[5m]))",
+          "unit": "ratio",
+          "labels": {
+            "job": "payments-api"
+          },
+          "points": [
+            {"timestamp": "2026-03-24T23:00:00Z", "value": 0.05},
+            {"timestamp": "2026-03-24T23:15:00Z", "value": 0.06},
+            {"timestamp": "2026-03-24T23:30:00Z", "value": 0.07},
+            {"timestamp": "2026-03-24T23:45:00Z", "value": 0.08}
+          ]
+        },
+        {
+          "name": "latency_slo_ratio",
+          "query": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+          "unit": "ratio",
+          "labels": {
+            "job": "payments-api"
+          },
+          "points": [
+            {"timestamp": "2026-03-24T23:00:00Z", "value": 0.14},
+            {"timestamp": "2026-03-24T23:15:00Z", "value": 0.15},
+            {"timestamp": "2026-03-24T23:30:00Z", "value": 0.17},
+            {"timestamp": "2026-03-24T23:45:00Z", "value": 0.18}
+          ]
+        },
+        {
+          "name": "cpu_usage_cores",
+          "query": "sum(rate(container_cpu_usage_seconds_total{namespace=\"payments\",pod=~\"payments-api-.*\",container!=\"POD\"}[5m]))",
+          "unit": "cores",
+          "labels": {
+            "job": "payments-api"
+          },
+          "points": [
+            {"timestamp": "2026-03-24T23:00:00Z", "value": 0.20},
+            {"timestamp": "2026-03-24T23:15:00Z", "value": 0.22},
+            {"timestamp": "2026-03-24T23:30:00Z", "value": 0.24},
+            {"timestamp": "2026-03-24T23:45:00Z", "value": 0.25}
+          ]
+        },
+        {
+          "name": "memory_working_set_bytes",
+          "query": "sum(container_memory_working_set_bytes{namespace=\"payments\",pod=~\"payments-api-.*\",container!=\"POD\"})",
+          "unit": "bytes",
+          "labels": {
+            "job": "payments-api"
+          },
+          "points": [
+            {"timestamp": "2026-03-24T23:00:00Z", "value": 2.8e8},
+            {"timestamp": "2026-03-24T23:15:00Z", "value": 3.0e8},
+            {"timestamp": "2026-03-24T23:30:00Z", "value": 3.1e8},
+            {"timestamp": "2026-03-24T23:45:00Z", "value": 3.2e8}
+          ]
+        }
+      ]
+    }
+  ],
+  "logs": [],
+  "bitbucketChanges": [],
+  "kibanaLogs": [],
+  "traces": [],
+  "historicalIncidents": [],
+  "catalogEntries": []
+}

@@ -7,8 +7,30 @@
 - Show the top Kibana error signatures for `upi-recon` and correlate them with Jaeger traces.
 - Did a recent PR cause the latency spike, or is this a downstream dependency issue?
 - Compare the impact before and after commit `XYZ` on `tradex-gateway`.
+- Compare the impact before and after the latest deploy for `payments-api`.
 - Find similar incidents to the current outage.
 - Where are our observability blind spots for root cause attribution?
+- What is the real-time SLO burn rate and remaining error budget for `payments-api`?
+- At the current error rate, when will `payments-api` breach its 99.9% availability SLO?
+- What depends on `payments-api`? What does it depend on?
+- Is the `tradex-gateway` failure cascading into downstream services?
+- Which workloads are wasting the most resources in `payments-uat`?
+- Suggest better resource requests and limits for `payments-api` based on recent P95 usage.
+- Show recent rollout revisions for `payments-api` with timestamps, image changes, and metric shifts.
+- Is the `payments-api` canary performing better or worse than stable?
+- Which alerts in `tradex-edge` are just noise versus genuine signals?
+- These 47 alerts look related. How many distinct incidents are they really?
+- What error patterns are showing up in `payments-api` logs right now?
+- Is `payments-api` log volume anomalous compared with the previous hour?
+- Are all ingress endpoints in `payments-uat` healthy?
+- Is `payments-api` network-isolated?
+- What is the security posture of workloads in the `payments` namespace?
+- Which workloads are running container images older than 14 days?
+- How does UAT compare to PROD right now for `payments-api`?
+- Is `payments-api` running the same version in UAT and PROD?
+- Is the `payments` namespace getting healthier or worse over the last 6 hours?
+- Export the full incident timeline for the current `payments-api` outage.
+- Which team has the most operational toil this week?
 - What is the likely blast radius if `tradex-gateway` keeps failing?
 - Which critical services are closest to SLO risk today?
 - Give me a CTO summary of the top five production risks in the last 24 hours.

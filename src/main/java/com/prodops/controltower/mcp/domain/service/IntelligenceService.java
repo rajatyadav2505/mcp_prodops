@@ -1,20 +1,35 @@
 package com.prodops.controltower.mcp.domain.service;
 
 import com.prodops.controltower.mcp.config.ProdOpsProperties;
+import com.prodops.controltower.mcp.domain.correlation.AlertCorrelationEngine;
+import com.prodops.controltower.mcp.domain.correlation.AlertNoiseAnalyzer;
 import com.prodops.controltower.mcp.domain.correlation.BlastRadiusEngine;
+import com.prodops.controltower.mcp.domain.correlation.CanaryHealthAnalyzer;
 import com.prodops.controltower.mcp.domain.correlation.CapacityForecastEngine;
 import com.prodops.controltower.mcp.domain.correlation.CausalEvidenceGraphBuilder;
 import com.prodops.controltower.mcp.domain.correlation.ChangeAttributionEngine;
 import com.prodops.controltower.mcp.domain.correlation.ChangeCorrelationEngine;
 import com.prodops.controltower.mcp.domain.correlation.ChangeImpactComparator;
+import com.prodops.controltower.mcp.domain.correlation.ClusterComparisonEngine;
 import com.prodops.controltower.mcp.domain.correlation.CoverageGapAnalyzer;
+import com.prodops.controltower.mcp.domain.correlation.DependencyTopologyEngine;
 import com.prodops.controltower.mcp.domain.correlation.IncidentFingerprintEngine;
+import com.prodops.controltower.mcp.domain.correlation.IncidentTimelineBuilder;
+import com.prodops.controltower.mcp.domain.correlation.ResourceWasteAnalyzer;
+import com.prodops.controltower.mcp.domain.correlation.RiskTrendEngine;
+import com.prodops.controltower.mcp.domain.correlation.RolloutHistoryEngine;
 import com.prodops.controltower.mcp.domain.correlation.RootCauseAnalysisEngine;
+import com.prodops.controltower.mcp.domain.correlation.SloStatusEngine;
+import com.prodops.controltower.mcp.domain.correlation.ToilEstimator;
+import com.prodops.controltower.mcp.domain.model.AlertCorrelationResult;
+import com.prodops.controltower.mcp.domain.model.AlertNoiseAnalysisResult;
 import com.prodops.controltower.mcp.domain.model.BitbucketChange;
 import com.prodops.controltower.mcp.domain.model.BitbucketChangeQuery;
 import com.prodops.controltower.mcp.domain.model.BlastRadiusImpact;
 import com.prodops.controltower.mcp.domain.model.BlastRadiusResult;
+import com.prodops.controltower.mcp.domain.model.CanaryHealthResult;
 import com.prodops.controltower.mcp.domain.model.CapacityForecastResult;
+import com.prodops.controltower.mcp.domain.model.CascadingFailureResult;
 import com.prodops.controltower.mcp.domain.model.CausalEvidenceGraph;
 import com.prodops.controltower.mcp.domain.model.CausationClass;
 import com.prodops.controltower.mcp.domain.model.ChangeAttributionResult;
@@ -22,7 +37,10 @@ import com.prodops.controltower.mcp.domain.model.ChangeCausality;
 import com.prodops.controltower.mcp.domain.model.ChangeCorrelationResult;
 import com.prodops.controltower.mcp.domain.model.ChangeImpactComparison;
 import com.prodops.controltower.mcp.domain.model.ChangeTimelineEntry;
+import com.prodops.controltower.mcp.domain.model.ClusterComparisonResult;
 import com.prodops.controltower.mcp.domain.model.CoverageGapResult;
+import com.prodops.controltower.mcp.domain.model.CrossClusterDriftResult;
+import com.prodops.controltower.mcp.domain.model.DailyRiskTrendResult;
 import com.prodops.controltower.mcp.domain.model.DataFreshness;
 import com.prodops.controltower.mcp.domain.model.DeepLink;
 import com.prodops.controltower.mcp.domain.model.EvidenceItem;
@@ -34,19 +52,28 @@ import com.prodops.controltower.mcp.domain.model.HpaInfo;
 import com.prodops.controltower.mcp.domain.model.Hypothesis;
 import com.prodops.controltower.mcp.domain.model.IncidentContext;
 import com.prodops.controltower.mcp.domain.model.IncidentCorrelationResult;
+import com.prodops.controltower.mcp.domain.model.IncidentTimelineResult;
 import com.prodops.controltower.mcp.domain.model.LogErrorSignature;
 import com.prodops.controltower.mcp.domain.model.LogSearchResult;
 import com.prodops.controltower.mcp.domain.model.MetricSeries;
 import com.prodops.controltower.mcp.domain.model.MetricValue;
 import com.prodops.controltower.mcp.domain.model.ObjectReference;
 import com.prodops.controltower.mcp.domain.model.ObservabilityCoverageGap;
+import com.prodops.controltower.mcp.domain.model.ResourceWasteResult;
+import com.prodops.controltower.mcp.domain.model.RightSizingResult;
 import com.prodops.controltower.mcp.domain.model.RiskLevel;
+import com.prodops.controltower.mcp.domain.model.RolloutHistoryResult;
+import com.prodops.controltower.mcp.domain.model.RolloutRevision;
 import com.prodops.controltower.mcp.domain.model.RootCauseAnalysisResult;
 import com.prodops.controltower.mcp.domain.model.RootCauseCandidate;
 import com.prodops.controltower.mcp.domain.model.RootCauseDossier;
 import com.prodops.controltower.mcp.domain.model.ServiceCatalogEntry;
+import com.prodops.controltower.mcp.domain.model.ServiceDependencyMap;
 import com.prodops.controltower.mcp.domain.model.SimilarIncidentMatch;
 import com.prodops.controltower.mcp.domain.model.SimilarIncidentResult;
+import com.prodops.controltower.mcp.domain.model.SloBreachForecastResult;
+import com.prodops.controltower.mcp.domain.model.SloStatusResult;
+import com.prodops.controltower.mcp.domain.model.ToilEstimationResult;
 import com.prodops.controltower.mcp.domain.model.TraceSearchResult;
 import com.prodops.controltower.mcp.domain.model.TraceSummary;
 import com.prodops.controltower.mcp.domain.model.WarningEvent;
@@ -91,6 +118,17 @@ public class IntelligenceService {
   private final ChangeImpactComparator changeImpactComparator;
   private final IncidentFingerprintEngine incidentFingerprintEngine;
   private final CoverageGapAnalyzer coverageGapAnalyzer;
+  private final SloStatusEngine sloStatusEngine;
+  private final DependencyTopologyEngine dependencyTopologyEngine;
+  private final RolloutHistoryEngine rolloutHistoryEngine;
+  private final AlertNoiseAnalyzer alertNoiseAnalyzer;
+  private final AlertCorrelationEngine alertCorrelationEngine;
+  private final ResourceWasteAnalyzer resourceWasteAnalyzer;
+  private final CanaryHealthAnalyzer canaryHealthAnalyzer;
+  private final ClusterComparisonEngine clusterComparisonEngine;
+  private final RiskTrendEngine riskTrendEngine;
+  private final IncidentTimelineBuilder incidentTimelineBuilder;
+  private final ToilEstimator toilEstimator;
   private final ScopePolicy scopePolicy;
   private final ProdOpsProperties properties;
   private final Clock clock;
@@ -113,6 +151,17 @@ public class IntelligenceService {
       ChangeImpactComparator changeImpactComparator,
       IncidentFingerprintEngine incidentFingerprintEngine,
       CoverageGapAnalyzer coverageGapAnalyzer,
+      SloStatusEngine sloStatusEngine,
+      DependencyTopologyEngine dependencyTopologyEngine,
+      RolloutHistoryEngine rolloutHistoryEngine,
+      AlertNoiseAnalyzer alertNoiseAnalyzer,
+      AlertCorrelationEngine alertCorrelationEngine,
+      ResourceWasteAnalyzer resourceWasteAnalyzer,
+      CanaryHealthAnalyzer canaryHealthAnalyzer,
+      ClusterComparisonEngine clusterComparisonEngine,
+      RiskTrendEngine riskTrendEngine,
+      IncidentTimelineBuilder incidentTimelineBuilder,
+      ToilEstimator toilEstimator,
       ScopePolicy scopePolicy,
       ProdOpsProperties properties,
       Clock clock) {
@@ -133,6 +182,17 @@ public class IntelligenceService {
     this.changeImpactComparator = changeImpactComparator;
     this.incidentFingerprintEngine = incidentFingerprintEngine;
     this.coverageGapAnalyzer = coverageGapAnalyzer;
+    this.sloStatusEngine = sloStatusEngine;
+    this.dependencyTopologyEngine = dependencyTopologyEngine;
+    this.rolloutHistoryEngine = rolloutHistoryEngine;
+    this.alertNoiseAnalyzer = alertNoiseAnalyzer;
+    this.alertCorrelationEngine = alertCorrelationEngine;
+    this.resourceWasteAnalyzer = resourceWasteAnalyzer;
+    this.canaryHealthAnalyzer = canaryHealthAnalyzer;
+    this.clusterComparisonEngine = clusterComparisonEngine;
+    this.riskTrendEngine = riskTrendEngine;
+    this.incidentTimelineBuilder = incidentTimelineBuilder;
+    this.toilEstimator = toilEstimator;
     this.scopePolicy = scopePolicy;
     this.properties = properties;
     this.clock = clock;
@@ -463,6 +523,690 @@ public class IntelligenceService {
         series.isEmpty()
             ? List.of("No range series was available for the requested scope.")
             : List.of(),
+        Instant.now(clock),
+        new DataFreshness(Instant.now(clock), Instant.now(clock), Duration.ZERO, false));
+  }
+
+  public SloStatusResult checkSloStatus(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      Duration lookback,
+      String identity) {
+    IncidentContext context =
+        buildIncidentContext(cluster, namespace, serviceOrWorkload, lookback, identity);
+    Instant end = Instant.now(clock);
+    List<MetricSeries> series =
+        recentMetricSeries(
+            cluster, namespace, context.workload().name(), context.catalogEntry(), end, lookback);
+    SloStatusEngine.Analysis analysis =
+        sloStatusEngine.analyze(
+            context.catalogEntry() == null ? List.of() : context.catalogEntry().sloTargets(),
+            context.workloadHealth().coreMetrics(),
+            seriesByMetric(series));
+    SloStatusResult.SloBudgetStatus leading = analysis.leadingRisk();
+    return new SloStatusResult(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        leading == null
+            ? "No curated SLO targets were available for the selected service."
+            : "Closest SLO risk is "
+                + leading.name()
+                + " with "
+                + Math.round(leading.remainingBudgetPercent())
+                + "% budget remaining.",
+        leading == null
+            ? "SLO status requires curated service-catalog targets."
+            : "SLO status used current golden signals and recent Prometheus trends to estimate burn and remaining budget.",
+        analysis.budgets(),
+        leading,
+        analysis.confidenceBreakdown(),
+        directLinks(
+            context,
+            observabilityService.summarizeKibanaErrors(
+                cluster, namespace, serviceOrWorkload, lookback, null, null, null, null, identity),
+            null),
+        combineUnknowns(analysis.limitations(), List.of()),
+        Instant.now(clock),
+        context.dataFreshness());
+  }
+
+  public SloBreachForecastResult sloBreachForecast(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      Duration lookback,
+      String identity) {
+    SloStatusResult status =
+        checkSloStatus(cluster, namespace, serviceOrWorkload, lookback, identity);
+    SloStatusEngine.Forecast forecast =
+        sloStatusEngine.forecast(
+            status.leadingRisk(), Instant.now(clock), status.confidenceBreakdown());
+    List<EvidenceItem> evidence =
+        status.leadingRisk() == null
+            ? List.of()
+            : List.of(
+                new EvidenceItem(
+                    "slo-forecast-" + status.leadingRisk().name(),
+                    EvidenceSource.PROMETHEUS,
+                    EvidenceType.METRIC,
+                    new ObjectReference(cluster, namespace, "Service", serviceOrWorkload),
+                    status.leadingRisk().name(),
+                    "Forecasted using current SLO ratio and recent trend slope.",
+                    status.leadingRisk().metricName(),
+                    null,
+                    null,
+                    Instant.now(clock),
+                    status.leadingRisk().currentRatio(),
+                    null,
+                    status.confidenceBreakdown().overallConfidence()));
+    return new SloBreachForecastResult(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        status.leadingRisk() == null
+            ? "No SLO forecast could be produced because no curated SLO target matched the scope."
+            : forecast.timeToBreach() == null
+                ? "At the current trend, no near-term SLO breach is projected."
+                : "At the current burn rate, "
+                    + serviceOrWorkload
+                    + " will breach "
+                    + status.leadingRisk().name()
+                    + " in "
+                    + forecast.timeToBreach().toMinutes()
+                    + " minutes.",
+        status.leadingRisk() == null
+            ? "SLO forecasting requires a matching curated SLO and recent metric trend."
+            : "Forecast projected the leading SLO breach point from the recent ratio slope without overstating certainty.",
+        status.leadingRisk() == null ? null : status.leadingRisk().name(),
+        status.leadingRisk() == null ? 0.0d : status.leadingRisk().currentRatio(),
+        status.leadingRisk() == null ? 0.0d : status.leadingRisk().remainingBudgetPercent(),
+        forecast.timeToBreach(),
+        forecast.projectedBreachAt(),
+        forecast.confidenceBreakdown(),
+        evidence,
+        status.limitations(),
+        Instant.now(clock),
+        status.dataFreshness());
+  }
+
+  public ServiceDependencyMap mapServiceDependencies(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      Duration lookback,
+      String identity) {
+    IncidentContext context =
+        buildIncidentContext(cluster, namespace, serviceOrWorkload, lookback, identity);
+    Map<String, WorkloadHealth> healthByService =
+        relatedHealthByService(cluster, namespace, context, lookback, identity);
+    DependencyTopologyEngine.Topology topology =
+        dependencyTopologyEngine.build(
+            cluster,
+            namespace,
+            serviceOrWorkload,
+            context.catalogEntry(),
+            serviceCatalogPort.listServices().stream()
+                .filter(entry -> entry.cluster().equals(cluster))
+                .toList(),
+            clusterInventoryPort.listServices(cluster, namespace),
+            clusterInventoryPort.listIngresses(cluster, namespace),
+            context.traceSummaries(),
+            healthByService,
+            properties.guardrails().maxTopologyNodes());
+    return new ServiceDependencyMap(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        "Dependency map identified "
+            + topology.nodes().size()
+            + " related services and surfaces around "
+            + serviceOrWorkload
+            + ".",
+        "Topology combined curated dependencies, ingress routes, and Jaeger dependency edges.",
+        topology.nodes(),
+        topology.edges(),
+        topology.confidence(),
+        context.traceSummaries().stream()
+            .map(TraceSummary::deepLink)
+            .filter(link -> link != null)
+            .distinct()
+            .toList(),
+        topology.limitations(),
+        Instant.now(clock),
+        context.dataFreshness());
+  }
+
+  public CascadingFailureResult detectCascadingFailure(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      Duration lookback,
+      String identity) {
+    IncidentContext context =
+        buildIncidentContext(cluster, namespace, serviceOrWorkload, lookback, identity);
+    Map<String, WorkloadHealth> healthByService =
+        relatedHealthByService(cluster, namespace, context, lookback, identity);
+    DependencyTopologyEngine.Topology topology =
+        dependencyTopologyEngine.build(
+            cluster,
+            namespace,
+            serviceOrWorkload,
+            context.catalogEntry(),
+            serviceCatalogPort.listServices().stream()
+                .filter(entry -> entry.cluster().equals(cluster))
+                .toList(),
+            clusterInventoryPort.listServices(cluster, namespace),
+            clusterInventoryPort.listIngresses(cluster, namespace),
+            context.traceSummaries(),
+            healthByService,
+            properties.guardrails().maxTopologyNodes());
+    String targetId =
+        context.catalogEntry() == null ? serviceOrWorkload : context.catalogEntry().serviceId();
+    DependencyTopologyEngine.CascadeAssessment assessment =
+        dependencyTopologyEngine.detect(
+            targetId, context.workloadHealth(), topology, healthByService);
+    return new CascadingFailureResult(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        assessment.cascading()
+            ? "The focal service appears to be cascading failure into downstream dependents."
+            : "No strong cascading-failure pattern was detected for downstream dependents.",
+        "Cascade detection looked for unhealthy downstream services that depend on the focal workload and degraded after it.",
+        assessment.cascading(),
+        assessment.impacts(),
+        new com.prodops.controltower.mcp.domain.model.ConfidenceBreakdown(
+            topology.confidence(),
+            0.42d,
+            0.09d,
+            topology.limitations().size() * 0.04d,
+            List.of(
+                new com.prodops.controltower.mcp.domain.model.ConfidenceFactor(
+                    "topology map",
+                    0.2d,
+                    "Dependencies were mapped deterministically before cascade scoring."),
+                new com.prodops.controltower.mcp.domain.model.ConfidenceFactor(
+                    "downstream health",
+                    assessment.impacts().isEmpty() ? 0.0d : 0.18d,
+                    "Dependent workload health influenced the final cascade judgment.")),
+            "Cascade confidence is bounded when downstream services lack workload mappings."),
+        topology.limitations(),
+        Instant.now(clock),
+        context.dataFreshness());
+  }
+
+  public ResourceWasteResult identifyResourceWaste(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      Duration lookback,
+      String identity) {
+    scopePolicy.assertAllowed(scopePolicy.authorizeNamespace(cluster, namespace, identity));
+    List<WorkloadInfo> workloads = scopedWorkloads(cluster, namespace, serviceOrWorkload);
+    Map<String, ResourceWasteAnalyzer.UsageSnapshot> usageSnapshots =
+        usageSnapshots(cluster, namespace, workloads, lookback);
+    List<ResourceWasteResult.ResourceWasteFinding> findings =
+        resourceWasteAnalyzer.findWaste(
+            workloads, usageSnapshots, properties.guardrails().maxChangeCandidates());
+    return new ResourceWasteResult(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        findings.isEmpty()
+            ? "No strongly over-provisioned workloads were detected in the selected scope."
+            : "Top over-provisioned workload is " + findings.getFirst().workloadName() + ".",
+        "Waste analysis compared workload resource requests against observed CPU and memory usage over the selected window.",
+        findings,
+        resourceConfidence(workloads, usageSnapshots),
+        workloads.stream().anyMatch(workload -> !workload.hasResourceRequests())
+            ? List.of("Some workloads did not declare resource requests and could not be scored.")
+            : List.of(),
+        Instant.now(clock),
+        freshnessFromWorkloads(workloads));
+  }
+
+  public RightSizingResult rightSizingRecommendations(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      Duration lookback,
+      String identity) {
+    scopePolicy.assertAllowed(scopePolicy.authorizeNamespace(cluster, namespace, identity));
+    List<WorkloadInfo> workloads = scopedWorkloads(cluster, namespace, serviceOrWorkload);
+    Map<String, ResourceWasteAnalyzer.UsageSnapshot> usageSnapshots =
+        usageSnapshots(cluster, namespace, workloads, lookback);
+    List<RightSizingResult.RightSizingRecommendation> recommendations =
+        resourceWasteAnalyzer.rightSize(
+            workloads, usageSnapshots, properties.guardrails().maxChangeCandidates());
+    return new RightSizingResult(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        recommendations.isEmpty()
+            ? "No right-sizing recommendations were produced for the selected scope."
+            : "Right-sizing recommendations were produced for "
+                + recommendations.size()
+                + " workloads.",
+        "Recommendations target approximately 130% of observed P95 usage while preserving deterministic guardrails.",
+        recommendations,
+        resourceConfidence(workloads, usageSnapshots),
+        workloads.stream().anyMatch(workload -> !workload.hasResourceRequests())
+            ? List.of(
+                "Some workloads did not declare resource requests and could not be recommended.")
+            : List.of(),
+        Instant.now(clock),
+        freshnessFromWorkloads(workloads));
+  }
+
+  public ChangeImpactComparison comparePrePostDeploy(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      Duration lookback,
+      String changeReference,
+      String identity) {
+    return compareChangeImpact(
+        cluster, namespace, serviceOrWorkload, lookback, changeReference, identity);
+  }
+
+  public RolloutHistoryResult rolloutHistory(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      Duration lookback,
+      String identity) {
+    IncidentContext context =
+        buildIncidentContext(cluster, namespace, serviceOrWorkload, lookback, identity);
+    List<RolloutRevision> revisions =
+        clusterInventoryPort.listRolloutRevisions(
+            cluster, namespace, context.workload().name(), context.workload().kind());
+    List<MetricSeries> series =
+        recentMetricSeries(
+            cluster,
+            namespace,
+            context.workload().name(),
+            context.catalogEntry(),
+            Instant.now(clock),
+            lookback);
+    List<String> notes = rolloutHistoryEngine.correlate(revisions, series);
+    return new RolloutHistoryResult(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        revisions.isEmpty()
+            ? "No rollout revisions were available for the selected workload."
+            : "Found " + revisions.size() + " rollout revisions for " + serviceOrWorkload + ".",
+        "Rollout history combined Kubernetes revision lineage with nearby metric shifts and recent Bitbucket changes.",
+        revisions,
+        notes,
+        context.bitbucketChanges().stream()
+            .flatMap(change -> change.deepLinks().stream())
+            .distinct()
+            .toList(),
+        Instant.now(clock),
+        context.dataFreshness());
+  }
+
+  public CanaryHealthResult canaryHealthCheck(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      Duration lookback,
+      String identity) {
+    IncidentContext context =
+        buildIncidentContext(cluster, namespace, serviceOrWorkload, lookback, identity);
+    CanaryHealthAnalyzer.Analysis analysis =
+        canaryHealthAnalyzer.analyze(
+            context.workloadHealth(), context.logEvents(), context.traceSummaries());
+    return new CanaryHealthResult(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        !analysis.canaryDetected()
+            ? "No canary cohort could be detected for the selected workload."
+            : analysis.canary().healthScore() >= analysis.stable().healthScore()
+                ? "Canary is performing at least as well as the stable cohort."
+                : "Canary is underperforming relative to the stable cohort.",
+        "Canary health compared pod readiness, restarts, error logs, and trace failures between canary and stable cohorts.",
+        analysis.canaryDetected(),
+        analysis.canary(),
+        analysis.stable(),
+        analysis.confidenceBreakdown(),
+        analysis.canaryDetected()
+            ? List.of()
+            : List.of("No canary-specific pod labels or naming markers were found."),
+        Instant.now(clock),
+        context.dataFreshness());
+  }
+
+  public AlertNoiseAnalysisResult alertNoiseAnalysis(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      Duration lookback,
+      String identity) {
+    IncidentContext context =
+        buildIncidentContext(cluster, namespace, serviceOrWorkload, lookback, identity);
+    AlertNoiseAnalyzer.Analysis analysis =
+        alertNoiseAnalyzer.analyze(context.warningEvents(), context.workloadHealth());
+    return new AlertNoiseAnalysisResult(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        analysis.noisyAlertCount() == 0
+            ? "Current warning alerts are mostly actionable rather than noisy."
+            : analysis.noisyAlertCount() + " alert categories appear noisy in the selected window.",
+        "Alert noise analysis deduplicated warning events by reason and object, then checked workload corroboration.",
+        context.warningEvents().stream().mapToInt(WarningEvent::count).sum(),
+        analysis.noisyAlertCount(),
+        analysis.actionableAlertCount(),
+        analysis.reasons(),
+        analysis.confidenceBreakdown(),
+        context.warningEvents().isEmpty()
+            ? List.of("No warning events were present in the selected window.")
+            : List.of(),
+        Instant.now(clock),
+        context.dataFreshness());
+  }
+
+  public AlertCorrelationResult alertCorrelationGroups(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      Duration lookback,
+      String identity) {
+    IncidentContext context =
+        buildIncidentContext(cluster, namespace, serviceOrWorkload, lookback, identity);
+    List<AlertCorrelationResult.AlertCorrelationGroup> groups =
+        alertCorrelationEngine.group(
+            context.warningEvents(), properties.guardrails().maxAlertGroups());
+    return new AlertCorrelationResult(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        groups.isEmpty()
+            ? "No warning alerts were available to group."
+            : context.warningEvents().size()
+                + " warning alerts collapsed into "
+                + groups.size()
+                + " correlation groups.",
+        "Alert groups were formed by time proximity and shared involved objects or reasons.",
+        context.warningEvents().stream().mapToInt(WarningEvent::count).sum(),
+        groups.size(),
+        groups,
+        Instant.now(clock),
+        context.dataFreshness());
+  }
+
+  public ClusterComparisonResult compareClusters(
+      List<String> clusters,
+      String namespace,
+      String serviceOrWorkload,
+      Duration lookback,
+      String identity) {
+    scopePolicy.verifyClusterComparisonLimit(clusters.size());
+    List<ClusterComparisonResult.ClusterHealthComparison> comparisons = new ArrayList<>();
+    for (String cluster : clusters) {
+      scopePolicy.assertAllowed(
+          namespace == null || namespace.isBlank()
+              ? scopePolicy.authorizeCluster(cluster, identity)
+              : scopePolicy.authorizeNamespace(cluster, namespace, identity));
+      if (namespace != null
+          && !namespace.isBlank()
+          && serviceOrWorkload != null
+          && !serviceOrWorkload.isBlank()) {
+        WorkloadInfo workload = resolveWorkload(cluster, namespace, serviceOrWorkload);
+        WorkloadHealth health =
+            inventoryService.getWorkloadHealth(
+                cluster, namespace, workload.name(), workload.kind(), lookback, identity);
+        comparisons.add(
+            new ClusterComparisonResult.ClusterHealthComparison(
+                cluster,
+                namespace + "/" + serviceOrWorkload,
+                health.verdict(),
+                health.riskLevel(),
+                health.riskScore(),
+                1,
+                health.verdict() == HealthVerdict.HEALTHY ? 0 : 1,
+                versionTag(workload, resolveCatalogEntry(cluster, namespace, serviceOrWorkload))));
+      } else if (namespace != null && !namespace.isBlank()) {
+        var namespaceHealth =
+            inventoryService.getNamespaceHealth(cluster, namespace, lookback, identity);
+        comparisons.add(
+            new ClusterComparisonResult.ClusterHealthComparison(
+                cluster,
+                namespace,
+                namespaceHealth.verdict(),
+                namespaceHealth.riskLevel(),
+                namespaceHealth.riskScore(),
+                namespaceHealth.workloadCount(),
+                namespaceHealth.unhealthyWorkloadCount(),
+                null));
+      } else {
+        List<com.prodops.controltower.mcp.domain.model.NamespaceInfo> namespaces =
+            inventoryService.listNamespaces(cluster, null, false, identity);
+        int workloadCount = 0;
+        int unhealthy = 0;
+        double riskScore = 0.0d;
+        HealthVerdict verdict = HealthVerdict.HEALTHY;
+        RiskLevel riskLevel = RiskLevel.LOW;
+        for (com.prodops.controltower.mcp.domain.model.NamespaceInfo item : namespaces) {
+          var health =
+              inventoryService.getNamespaceHealth(cluster, item.name(), lookback, identity);
+          workloadCount += health.workloadCount();
+          unhealthy += health.unhealthyWorkloadCount();
+          riskScore += health.riskScore();
+          if (riskSeverity(health.riskLevel()) > riskSeverity(riskLevel)) {
+            riskLevel = health.riskLevel();
+          }
+          if (health.verdict() == HealthVerdict.UNHEALTHY) {
+            verdict = HealthVerdict.UNHEALTHY;
+          } else if (verdict == HealthVerdict.HEALTHY
+              && health.verdict() == HealthVerdict.DEGRADED) {
+            verdict = HealthVerdict.DEGRADED;
+          }
+        }
+        comparisons.add(
+            new ClusterComparisonResult.ClusterHealthComparison(
+                cluster,
+                "cluster",
+                verdict,
+                riskLevel,
+                namespaces.isEmpty() ? 0.0d : riskScore / namespaces.size(),
+                workloadCount,
+                unhealthy,
+                null));
+      }
+    }
+    ClusterComparisonEngine.Comparison comparison = clusterComparisonEngine.compare(comparisons);
+    return new ClusterComparisonResult(
+        comparisons.isEmpty()
+            ? "No cluster comparison could be produced."
+            : "Compared "
+                + comparisons.size()
+                + " clusters for "
+                + (namespace == null || namespace.isBlank() ? "cluster-wide health" : namespace)
+                + ".",
+        "Cluster comparison aligned health, risk, and version signals across the requested scopes.",
+        comparisons,
+        comparison.differences(),
+        comparison.confidenceBreakdown(),
+        Instant.now(clock),
+        new DataFreshness(Instant.now(clock), Instant.now(clock), Duration.ZERO, false));
+  }
+
+  public CrossClusterDriftResult crossClusterDrift(
+      String clusterA,
+      String clusterB,
+      String namespace,
+      String serviceOrWorkload,
+      String identity) {
+    scopePolicy.assertAllowed(scopePolicy.authorizeNamespace(clusterA, namespace, identity));
+    scopePolicy.assertAllowed(scopePolicy.authorizeNamespace(clusterB, namespace, identity));
+    WorkloadInfo left = resolveWorkload(clusterA, namespace, serviceOrWorkload);
+    WorkloadInfo right = resolveWorkload(clusterB, namespace, serviceOrWorkload);
+    List<CrossClusterDriftResult.DriftItem> driftItems = clusterComparisonEngine.drift(left, right);
+    return new CrossClusterDriftResult(
+        clusterA,
+        clusterB,
+        namespace,
+        serviceOrWorkload,
+        driftItems.isEmpty()
+            ? "No material workload-spec drift was detected between the selected clusters."
+            : "Detected "
+                + driftItems.size()
+                + " workload drift items across the selected clusters.",
+        "Drift detection compared image, revision, replicas, resource requests, and selected security fields.",
+        driftItems,
+        List.of(),
+        Instant.now(clock),
+        new DataFreshness(
+            Instant.now(clock),
+            freshest(left.updatedAt(), right.updatedAt()),
+            Duration.ZERO,
+            false));
+  }
+
+  public DailyRiskTrendResult dailyRiskTrend(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      Duration lookback,
+      String identity) {
+    IncidentContext context =
+        buildIncidentContext(cluster, namespace, serviceOrWorkload, lookback, identity);
+    List<MetricSeries> series =
+        recentMetricSeries(
+            cluster,
+            namespace,
+            context.workload().name(),
+            context.catalogEntry(),
+            Instant.now(clock),
+            lookback);
+    RiskTrendEngine.Analysis analysis =
+        riskTrendEngine.analyze(
+            series,
+            context.workloadHealth().totalRestarts(),
+            context.warningEvents().stream().mapToInt(WarningEvent::count).sum(),
+            context.workloadHealth().rolloutAge().toMinutes(),
+            replicaGap(context.workload().desiredReplicas(), context.workload().readyReplicas()),
+            context.catalogEntry() == null ? 0.45d : 0.15d,
+            context.logEvents().isEmpty() ? 0.3d : 0.15d,
+            riskWeightsPort.getWeights());
+    return new DailyRiskTrendResult(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        "Risk trend for " + serviceOrWorkload + " is " + analysis.trend() + ".",
+        "Risk trend replayed recent metric windows and event density through the deterministic risk model.",
+        analysis.trend(),
+        analysis.points(),
+        new com.prodops.controltower.mcp.domain.model.ConfidenceBreakdown(
+            analysis.points().size() > 2 ? 0.76d : 0.48d,
+            0.42d,
+            0.08d,
+            analysis.points().size() > 2 ? 0.08d : 0.22d,
+            List.of(
+                new com.prodops.controltower.mcp.domain.model.ConfidenceFactor(
+                    "metric replay",
+                    series.isEmpty() ? 0.0d : 0.22d,
+                    "Risk points were reconstructed from Prometheus series."),
+                new com.prodops.controltower.mcp.domain.model.ConfidenceFactor(
+                    "event density",
+                    context.warningEvents().isEmpty() ? 0.0d : 0.14d,
+                    "Warning-event density contributed to each point.")),
+            "Trend confidence is strongest when multiple Prometheus points were available."),
+        series.isEmpty()
+            ? List.of("No recent metric series were available for trend replay.")
+            : List.of(),
+        Instant.now(clock),
+        context.dataFreshness());
+  }
+
+  public IncidentTimelineResult incidentTimelineExport(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      Duration lookback,
+      String identity) {
+    IncidentContext context =
+        buildIncidentContext(cluster, namespace, serviceOrWorkload, lookback, identity);
+    LogSearchResult logSearch =
+        observabilityService.summarizeKibanaErrors(
+            cluster, namespace, serviceOrWorkload, lookback, null, null, null, null, identity);
+    List<RolloutRevision> revisions =
+        clusterInventoryPort.listRolloutRevisions(
+            cluster, namespace, context.workload().name(), context.workload().kind());
+    List<MetricSeries> series =
+        recentMetricSeries(
+            cluster,
+            namespace,
+            context.workload().name(),
+            context.catalogEntry(),
+            Instant.now(clock),
+            lookback);
+    List<IncidentTimelineResult.IncidentTimelineEntry> entries =
+        incidentTimelineBuilder.build(
+            revisions,
+            context.warningEvents(),
+            context.bitbucketChanges(),
+            series,
+            logSearch.topSignatures(),
+            context.traceSummaries(),
+            properties.guardrails().maxTimelineEntries());
+    return new IncidentTimelineResult(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        entries.isEmpty()
+            ? "No timeline entries were available for the selected incident window."
+            : "Constructed an incident timeline with " + entries.size() + " evidence entries.",
+        "Timeline export merged rollouts, changes, warnings, metrics, logs, and traces in chronological order.",
+        entries,
+        directLinks(context, logSearch, null),
+        entries.isEmpty()
+            ? List.of("No evidence sources were populated in the selected window.")
+            : List.of(),
+        Instant.now(clock),
+        context.dataFreshness());
+  }
+
+  public ToilEstimationResult toilEstimation(
+      String cluster, String namespace, Duration lookback, String identity) {
+    scopePolicy.assertAllowed(
+        namespace == null || namespace.isBlank()
+            ? scopePolicy.authorizeCluster(cluster, identity)
+            : scopePolicy.authorizeNamespace(cluster, namespace, identity));
+    List<com.prodops.controltower.mcp.domain.model.NamespaceInfo> namespaces =
+        namespace == null || namespace.isBlank()
+            ? inventoryService.listNamespaces(cluster, null, false, identity)
+            : List.of(
+                new com.prodops.controltower.mcp.domain.model.NamespaceInfo(
+                    cluster, namespace, Map.of(), "unknown", "standard", false));
+    List<WorkloadHealth> workloadHealths = new ArrayList<>();
+    List<WarningEvent> warningEvents = new ArrayList<>();
+    for (com.prodops.controltower.mcp.domain.model.NamespaceInfo item : namespaces) {
+      for (WorkloadInfo workload :
+          clusterInventoryPort.listWorkloads(cluster, item.name(), null, null)) {
+        workloadHealths.add(
+            inventoryService.getWorkloadHealth(
+                cluster, item.name(), workload.name(), workload.kind(), lookback, identity));
+      }
+      warningEvents.addAll(
+          inventoryService.getRecentWarningEvents(cluster, item.name(), null, lookback, identity));
+    }
+    List<ToilEstimationResult.ToilSummary> summaries =
+        toilEstimator.estimate(workloadHealths, warningEvents);
+    return new ToilEstimationResult(
+        cluster,
+        namespace,
+        summaries.isEmpty()
+            ? "No operational toil signals were detected for the selected scope."
+            : "Top toil burden is currently " + summaries.getFirst().scope() + ".",
+        "Toil estimation combined warning-event volume, restart pressure, and scaling-related signals.",
+        summaries,
         Instant.now(clock),
         new DataFreshness(Instant.now(clock), Instant.now(clock), Duration.ZERO, false));
   }
@@ -1364,6 +2108,259 @@ public class IntelligenceService {
     List<String> unknowns = new ArrayList<>(baseUnknowns);
     coverageGaps.stream().map(ObservabilityCoverageGap::summary).forEach(unknowns::add);
     return unknowns;
+  }
+
+  private List<MetricSeries> recentMetricSeries(
+      String cluster,
+      String namespace,
+      String workloadName,
+      ServiceCatalogEntry catalogEntry,
+      Instant end,
+      Duration window) {
+    Map<String, String> queries = comparisonQueries(namespace, workloadName, catalogEntry);
+    List<MetricSeries> series = new ArrayList<>();
+    queries.forEach(
+        (metricName, query) -> {
+          if (query == null || query.isBlank()) {
+            return;
+          }
+          metricsPort
+              .rangeQuery(cluster, query, end.minus(window), end, properties.guardrails().minStep())
+              .series()
+              .forEach(
+                  item ->
+                      series.add(
+                          new MetricSeries(
+                              metricName,
+                              item.query(),
+                              item.unit(),
+                              item.labels(),
+                              item.points())));
+        });
+    return series;
+  }
+
+  private Map<String, List<MetricSeries>> seriesByMetric(List<MetricSeries> series) {
+    return series.stream().collect(java.util.stream.Collectors.groupingBy(MetricSeries::name));
+  }
+
+  private Map<String, WorkloadHealth> relatedHealthByService(
+      String cluster,
+      String namespace,
+      IncidentContext context,
+      Duration lookback,
+      String identity) {
+    Map<String, WorkloadHealth> healthByService = new LinkedHashMap<>();
+    String targetId =
+        context.catalogEntry() == null
+            ? context.serviceOrWorkload()
+            : context.catalogEntry().serviceId();
+    healthByService.put(targetId, context.workloadHealth());
+    java.util.Set<String> relatedServiceIds = new java.util.LinkedHashSet<>();
+    if (context.catalogEntry() != null) {
+      relatedServiceIds.addAll(context.catalogEntry().dependencyServiceIds());
+    }
+    serviceCatalogPort.listServices().stream()
+        .filter(entry -> entry.cluster().equals(cluster))
+        .filter(entry -> entry.dependencyServiceIds().contains(targetId))
+        .map(ServiceCatalogEntry::serviceId)
+        .forEach(relatedServiceIds::add);
+    context.traceSummaries().stream()
+        .flatMap(trace -> trace.dependencyEdges().stream())
+        .map(
+            edge ->
+                targetId.equals(edge.sourceService()) ? edge.targetService() : edge.sourceService())
+        .filter(candidate -> candidate != null && !candidate.equals(targetId))
+        .forEach(relatedServiceIds::add);
+    for (String serviceId : relatedServiceIds) {
+      ServiceCatalogEntry relatedEntry =
+          serviceCatalogPort.listServices().stream()
+              .filter(entry -> entry.cluster().equals(cluster))
+              .filter(entry -> entry.namespace().equals(namespace))
+              .filter(
+                  entry ->
+                      entry.serviceId().equals(serviceId)
+                          || serviceId.equals(entry.traceServiceName())
+                          || entry.workloadName().equals(serviceId))
+              .findFirst()
+              .orElse(null);
+      if (relatedEntry == null) {
+        continue;
+      }
+      try {
+        healthByService.put(
+            relatedEntry.serviceId(),
+            inventoryService.getWorkloadHealth(
+                cluster,
+                namespace,
+                relatedEntry.workloadName(),
+                relatedEntry.workloadKind(),
+                lookback,
+                identity));
+      } catch (RuntimeException ignored) {
+        // Missing workload mappings should lower confidence, not abort the whole topology flow.
+      }
+    }
+    return healthByService;
+  }
+
+  private List<WorkloadInfo> scopedWorkloads(
+      String cluster, String namespace, String serviceOrWorkload) {
+    if (serviceOrWorkload == null || serviceOrWorkload.isBlank()) {
+      return clusterInventoryPort.listWorkloads(cluster, namespace, null, null);
+    }
+    return List.of(resolveWorkload(cluster, namespace, serviceOrWorkload));
+  }
+
+  private Map<String, ResourceWasteAnalyzer.UsageSnapshot> usageSnapshots(
+      String cluster, String namespace, List<WorkloadInfo> workloads, Duration lookback) {
+    Map<String, ResourceWasteAnalyzer.UsageSnapshot> usage = new LinkedHashMap<>();
+    Instant end = Instant.now(clock);
+    for (WorkloadInfo workload : workloads) {
+      List<MetricSeries> cpuSeries =
+          metricsPort
+              .rangeQuery(
+                  cluster,
+                  cpuUsageQuery(namespace, workload.name()),
+                  end.minus(lookback),
+                  end,
+                  properties.guardrails().minStep())
+              .series();
+      List<MetricSeries> memorySeries =
+          metricsPort
+              .rangeQuery(
+                  cluster,
+                  memoryUsageQuery(namespace, workload.name()),
+                  end.minus(lookback),
+                  end,
+                  properties.guardrails().minStep())
+              .series();
+      double currentCpu = latestValue(cpuSeries);
+      double currentMemory = latestValue(memorySeries);
+      double p95Cpu = percentile(cpuSeries, 0.95d);
+      double p95Memory = percentile(memorySeries, 0.95d);
+      usage.put(
+          workload.name(),
+          new ResourceWasteAnalyzer.UsageSnapshot(currentCpu, currentMemory, p95Cpu, p95Memory));
+    }
+    return usage;
+  }
+
+  private com.prodops.controltower.mcp.domain.model.ConfidenceBreakdown resourceConfidence(
+      List<WorkloadInfo> workloads,
+      Map<String, ResourceWasteAnalyzer.UsageSnapshot> usageSnapshots) {
+    boolean allRequested = workloads.stream().allMatch(WorkloadInfo::hasResourceRequests);
+    boolean allMeasured =
+        workloads.stream().allMatch(workload -> usageSnapshots.containsKey(workload.name()));
+    double uncertaintyPenalty = (allRequested ? 0.04d : 0.16d) + (allMeasured ? 0.04d : 0.16d);
+    return new com.prodops.controltower.mcp.domain.model.ConfidenceBreakdown(
+        Math.max(0.38d, 0.86d - uncertaintyPenalty),
+        0.48d,
+        0.08d,
+        uncertaintyPenalty,
+        List.of(
+            new com.prodops.controltower.mcp.domain.model.ConfidenceFactor(
+                "resource requests",
+                allRequested ? 0.2d : 0.08d,
+                "Workload resource requests are required for waste and right-sizing analysis."),
+            new com.prodops.controltower.mcp.domain.model.ConfidenceFactor(
+                "usage series",
+                allMeasured ? 0.2d : 0.08d,
+                "Prometheus usage series are required for P95 usage estimation.")),
+        "Resource guidance confidence is strongest when requests and usage series are both complete.");
+  }
+
+  private double latestValue(List<MetricSeries> series) {
+    return series.stream()
+        .flatMap(item -> item.points().stream())
+        .max(Comparator.comparing(point -> point.timestamp()))
+        .map(point -> point.value())
+        .orElse(0.0d);
+  }
+
+  private double percentile(List<MetricSeries> series, double percentile) {
+    List<Double> values =
+        series.stream()
+            .flatMap(item -> item.points().stream())
+            .map(point -> point.value())
+            .sorted()
+            .toList();
+    if (values.isEmpty()) {
+      return 0.0d;
+    }
+    int index = Math.min(values.size() - 1, (int) Math.floor(percentile * (values.size() - 1)));
+    return values.get(index);
+  }
+
+  private String cpuUsageQuery(String namespace, String workloadName) {
+    return "sum(rate(container_cpu_usage_seconds_total{namespace=\""
+        + namespace
+        + "\",pod=~\""
+        + workloadName
+        + "-.*\",container!=\"POD\"}[5m]))";
+  }
+
+  private String memoryUsageQuery(String namespace, String workloadName) {
+    return "sum(container_memory_working_set_bytes{namespace=\""
+        + namespace
+        + "\",pod=~\""
+        + workloadName
+        + "-.*\",container!=\"POD\"})";
+  }
+
+  private String versionTag(WorkloadInfo workload, ServiceCatalogEntry catalogEntry) {
+    List<String> keys =
+        catalogEntry == null
+                || catalogEntry.versionLabelKeys() == null
+                || catalogEntry.versionLabelKeys().isEmpty()
+            ? List.of("app.kubernetes.io/version", "release", "image-tag")
+            : catalogEntry.versionLabelKeys();
+    return keys.stream()
+        .map(key -> workload.labels().get(key))
+        .filter(value -> value != null && !value.isBlank())
+        .findFirst()
+        .orElse(null);
+  }
+
+  private double replicaGap(Integer desiredReplicas, Integer readyReplicas) {
+    if (desiredReplicas == null || desiredReplicas == 0 || readyReplicas == null) {
+      return 0.0d;
+    }
+    return Math.max(0.0d, (desiredReplicas - readyReplicas) / (double) desiredReplicas);
+  }
+
+  private DataFreshness freshnessFromWorkloads(List<WorkloadInfo> workloads) {
+    Instant observedAt =
+        workloads.stream()
+            .map(workload -> Optional.ofNullable(workload.updatedAt()).orElse(workload.createdAt()))
+            .filter(item -> item != null)
+            .max(Comparator.naturalOrder())
+            .orElse(Instant.EPOCH);
+    Instant now = Instant.now(clock);
+    return new DataFreshness(
+        now,
+        observedAt,
+        observedAt.equals(Instant.EPOCH) ? Duration.ZERO : Duration.between(observedAt, now),
+        false);
+  }
+
+  private int riskSeverity(RiskLevel riskLevel) {
+    return switch (riskLevel) {
+      case CRITICAL -> 4;
+      case HIGH -> 3;
+      case MODERATE -> 2;
+      case LOW -> 1;
+    };
+  }
+
+  private Instant freshest(Instant first, Instant second) {
+    if (first == null) {
+      return second == null ? Instant.EPOCH : second;
+    }
+    if (second == null) {
+      return first;
+    }
+    return first.isAfter(second) ? first : second;
   }
 
   private double metric(String name, List<MetricValue> metrics) {

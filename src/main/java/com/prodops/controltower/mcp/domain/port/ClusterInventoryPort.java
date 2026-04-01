@@ -5,8 +5,10 @@ import com.prodops.controltower.mcp.domain.model.HpaInfo;
 import com.prodops.controltower.mcp.domain.model.IngressInfo;
 import com.prodops.controltower.mcp.domain.model.LogExcerpt;
 import com.prodops.controltower.mcp.domain.model.NamespaceInfo;
+import com.prodops.controltower.mcp.domain.model.NetworkPolicyInfo;
 import com.prodops.controltower.mcp.domain.model.PdbInfo;
 import com.prodops.controltower.mcp.domain.model.PodInfo;
+import com.prodops.controltower.mcp.domain.model.RolloutRevision;
 import com.prodops.controltower.mcp.domain.model.ServiceInfo;
 import com.prodops.controltower.mcp.domain.model.WarningEvent;
 import com.prodops.controltower.mcp.domain.model.WorkloadInfo;
@@ -36,9 +38,14 @@ public interface ClusterInventoryPort {
 
   List<IngressInfo> listIngresses(String cluster, String namespace);
 
+  List<NetworkPolicyInfo> listNetworkPolicies(String cluster, String namespace);
+
   Optional<HpaInfo> getHpa(String cluster, String namespace, String workloadName);
 
   Optional<PdbInfo> getPdb(String cluster, String namespace, String workloadName);
+
+  List<RolloutRevision> listRolloutRevisions(
+      String cluster, String namespace, String workloadName, WorkloadKind workloadKind);
 
   Optional<LogExcerpt> getPodLogs(
       String cluster,

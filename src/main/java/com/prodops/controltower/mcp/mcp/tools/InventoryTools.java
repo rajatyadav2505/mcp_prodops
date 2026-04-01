@@ -1,8 +1,12 @@
 package com.prodops.controltower.mcp.mcp.tools;
 
+import com.prodops.controltower.mcp.domain.model.ImageFreshnessCheckResult;
+import com.prodops.controltower.mcp.domain.model.IngressHealthResult;
 import com.prodops.controltower.mcp.domain.model.NamespaceHealth;
 import com.prodops.controltower.mcp.domain.model.NamespaceInfo;
+import com.prodops.controltower.mcp.domain.model.NetworkPolicyAuditResult;
 import com.prodops.controltower.mcp.domain.model.PodDiagnostics;
+import com.prodops.controltower.mcp.domain.model.SecurityPostureResult;
 import com.prodops.controltower.mcp.domain.model.WarningEvent;
 import com.prodops.controltower.mcp.domain.model.WorkloadHealth;
 import com.prodops.controltower.mcp.domain.model.WorkloadInfo;
@@ -199,6 +203,94 @@ public class InventoryTools {
                 namespace,
                 workload,
                 Duration.ofMinutes(sinceMinutes),
+                invocationSupport.identity()));
+  }
+
+  @McpTool(
+      name = "check_ingress_health",
+      description =
+          "List ingresses and backend readiness for a namespace or workload-facing service scope.")
+  public IngressHealthResult checkIngressHealth(
+      @McpToolParam(description = "Cluster name") String cluster,
+      @McpToolParam(description = "Namespace name") String namespace,
+      @McpToolParam(description = "Optional service ID or workload name", required = false)
+          String serviceOrWorkload) {
+    return invocationSupport.invoke(
+        "tool",
+        "check_ingress_health",
+        ArgumentMap.of(
+            "cluster", cluster, "namespace", namespace, "serviceOrWorkload", serviceOrWorkload),
+        () ->
+            inventoryService.checkIngressHealth(
+                cluster, namespace, serviceOrWorkload, invocationSupport.identity()));
+  }
+
+  @McpTool(
+      name = "check_network_policies",
+      description =
+          "Audit NetworkPolicies affecting a workload and flag ingress or egress exposure gaps.")
+  public NetworkPolicyAuditResult checkNetworkPolicies(
+      @McpToolParam(description = "Cluster name") String cluster,
+      @McpToolParam(description = "Namespace name") String namespace,
+      @McpToolParam(description = "Optional service ID or workload name", required = false)
+          String serviceOrWorkload) {
+    return invocationSupport.invoke(
+        "tool",
+        "check_network_policies",
+        ArgumentMap.of(
+            "cluster", cluster, "namespace", namespace, "serviceOrWorkload", serviceOrWorkload),
+        () ->
+            inventoryService.checkNetworkPolicies(
+                cluster, namespace, serviceOrWorkload, invocationSupport.identity()));
+  }
+
+  @McpTool(
+      name = "security_posture_scan",
+      description =
+          "Review workload security posture for non-root, privileged mode, host networking, limits, and readiness probes.")
+  public SecurityPostureResult securityPostureScan(
+      @McpToolParam(description = "Cluster name") String cluster,
+      @McpToolParam(description = "Namespace name") String namespace,
+      @McpToolParam(description = "Optional service ID or workload name", required = false)
+          String serviceOrWorkload) {
+    return invocationSupport.invoke(
+        "tool",
+        "security_posture_scan",
+        ArgumentMap.of(
+            "cluster", cluster, "namespace", namespace, "serviceOrWorkload", serviceOrWorkload),
+        () ->
+            inventoryService.securityPostureScan(
+                cluster, namespace, serviceOrWorkload, invocationSupport.identity()));
+  }
+
+  @McpTool(
+      name = "image_freshness_check",
+      description =
+          "Report workload image age, freshness threshold breaches, and whether age came from build metadata or rollout time.")
+  public ImageFreshnessCheckResult imageFreshnessCheck(
+      @McpToolParam(description = "Cluster name") String cluster,
+      @McpToolParam(description = "Namespace name") String namespace,
+      @McpToolParam(description = "Optional service ID or workload name", required = false)
+          String serviceOrWorkload,
+      @McpToolParam(description = "Stale threshold in days") @Min(1) int olderThanDays) {
+    return invocationSupport.invoke(
+        "tool",
+        "image_freshness_check",
+        ArgumentMap.of(
+            "cluster",
+            cluster,
+            "namespace",
+            namespace,
+            "serviceOrWorkload",
+            serviceOrWorkload,
+            "olderThanDays",
+            olderThanDays),
+        () ->
+            inventoryService.imageFreshnessCheck(
+                cluster,
+                namespace,
+                serviceOrWorkload,
+                olderThanDays,
                 invocationSupport.identity()));
   }
 }

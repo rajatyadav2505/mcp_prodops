@@ -1,17 +1,24 @@
 package com.prodops.controltower.mcp.domain.service;
 
+import com.prodops.controltower.mcp.domain.correlation.SecurityPostureAnalyzer;
 import com.prodops.controltower.mcp.domain.model.ClusterInfo;
 import com.prodops.controltower.mcp.domain.model.DashboardInfo;
 import com.prodops.controltower.mcp.domain.model.DataFreshness;
 import com.prodops.controltower.mcp.domain.model.HealthVerdict;
+import com.prodops.controltower.mcp.domain.model.ImageFreshnessCheckResult;
+import com.prodops.controltower.mcp.domain.model.IngressHealthResult;
 import com.prodops.controltower.mcp.domain.model.LogExcerpt;
 import com.prodops.controltower.mcp.domain.model.MetricValue;
 import com.prodops.controltower.mcp.domain.model.NamespaceHealth;
 import com.prodops.controltower.mcp.domain.model.NamespaceInfo;
+import com.prodops.controltower.mcp.domain.model.NetworkPolicyAuditResult;
+import com.prodops.controltower.mcp.domain.model.NetworkPolicyInfo;
 import com.prodops.controltower.mcp.domain.model.PodDiagnostics;
 import com.prodops.controltower.mcp.domain.model.PodInfo;
 import com.prodops.controltower.mcp.domain.model.RiskLevel;
+import com.prodops.controltower.mcp.domain.model.SecurityPostureResult;
 import com.prodops.controltower.mcp.domain.model.ServiceCatalogEntry;
+import com.prodops.controltower.mcp.domain.model.ServiceInfo;
 import com.prodops.controltower.mcp.domain.model.WarningEvent;
 import com.prodops.controltower.mcp.domain.model.WorkloadHealth;
 import com.prodops.controltower.mcp.domain.model.WorkloadInfo;
@@ -34,6 +41,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +54,7 @@ public class InventoryService {
   private final ServiceCatalogPort serviceCatalogPort;
   private final RiskWeightsPort riskWeightsPort;
   private final RiskScoreEngine riskScoreEngine;
+  private final SecurityPostureAnalyzer securityPostureAnalyzer;
   private final ScopePolicy scopePolicy;
   private final RedactionService redactionService;
   private final Clock clock;
@@ -57,6 +66,7 @@ public class InventoryService {
       ServiceCatalogPort serviceCatalogPort,
       RiskWeightsPort riskWeightsPort,
       RiskScoreEngine riskScoreEngine,
+      SecurityPostureAnalyzer securityPostureAnalyzer,
       ScopePolicy scopePolicy,
       RedactionService redactionService,
       Clock clock) {
@@ -66,6 +76,7 @@ public class InventoryService {
     this.serviceCatalogPort = serviceCatalogPort;
     this.riskWeightsPort = riskWeightsPort;
     this.riskScoreEngine = riskScoreEngine;
+    this.securityPostureAnalyzer = securityPostureAnalyzer;
     this.scopePolicy = scopePolicy;
     this.redactionService = redactionService;
     this.clock = clock;
@@ -267,6 +278,196 @@ public class InventoryService {
     return clusterInventoryPort.listWarningEvents(cluster, namespace, workload, since);
   }
 
+  public IngressHealthResult checkIngressHealth(
+      String cluster, String namespace, String serviceOrWorkload, String identity) {
+    scopePolicy.assertAllowed(scopePolicy.authorizeNamespace(cluster, namespace, identity));
+    List<WorkloadInfo> workloads = scopedWorkloads(cluster, namespace, serviceOrWorkload);
+    List<ServiceInfo> services = clusterInventoryPort.listServices(cluster, namespace);
+    List<com.prodops.controltower.mcp.domain.model.IngressInfo> ingresses =
+        clusterInventoryPort.listIngresses(cluster, namespace);
+    Predicate<ServiceInfo> serviceScope =
+        service ->
+            serviceOrWorkload == null
+                || serviceOrWorkload.isBlank()
+                || service.name().equals(serviceOrWorkload)
+                || workloads.stream()
+                    .anyMatch(workload -> selectorsMatch(service.selector(), workload.labels()));
+    List<IngressHealthResult.IngressBackendHealth> backendHealth =
+        ingresses.stream()
+            .flatMap(
+                ingress ->
+                    ingress.backendServices().stream()
+                        .flatMap(
+                            backend ->
+                                services.stream()
+                                    .filter(serviceScope)
+                                    .filter(service -> service.name().equals(backend))
+                                    .map(
+                                        service ->
+                                            toIngressHealth(
+                                                cluster, namespace, ingress, service, workloads))))
+            .toList();
+    long unhealthy =
+        backendHealth.stream()
+            .filter(backend -> backend.verdict() != HealthVerdict.HEALTHY)
+            .count();
+    return new IngressHealthResult(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        unhealthy == 0
+            ? "Ingress backends are healthy for the selected scope."
+            : unhealthy + " ingress backends are degraded or unhealthy.",
+        "Ingress health was inferred from backend Services and ready pod counts for matching workloads.",
+        backendHealth,
+        ingresses.isEmpty()
+            ? List.of("No ingress resources were found in the selected namespace.")
+            : List.of(),
+        Instant.now(clock),
+        freshnessFromWorkloads(workloads));
+  }
+
+  public NetworkPolicyAuditResult checkNetworkPolicies(
+      String cluster, String namespace, String serviceOrWorkload, String identity) {
+    scopePolicy.assertAllowed(scopePolicy.authorizeNamespace(cluster, namespace, identity));
+    List<WorkloadInfo> workloads = scopedWorkloads(cluster, namespace, serviceOrWorkload);
+    List<NetworkPolicyInfo> policies = clusterInventoryPort.listNetworkPolicies(cluster, namespace);
+    List<NetworkPolicyInfo> matchingPolicies =
+        policies.stream()
+            .filter(
+                policy -> workloads.stream().anyMatch(workload -> matchesPolicy(policy, workload)))
+            .toList();
+    boolean ingressIsolated =
+        matchingPolicies.stream()
+            .anyMatch(
+                policy -> policy.policyTypes().contains("Ingress") || policy.defaultDenyIngress());
+    boolean egressIsolated =
+        matchingPolicies.stream()
+            .anyMatch(
+                policy -> policy.policyTypes().contains("Egress") || policy.defaultDenyEgress());
+    boolean openExposure = !ingressIsolated || !egressIsolated;
+    List<String> findings = new java.util.ArrayList<>();
+    if (matchingPolicies.isEmpty()) {
+      findings.add("No NetworkPolicy objects matched the selected workload scope.");
+    }
+    if (!ingressIsolated) {
+      findings.add("Ingress is not isolated by a matching NetworkPolicy.");
+    }
+    if (!egressIsolated) {
+      findings.add("Egress is not isolated by a matching NetworkPolicy.");
+    }
+    return new NetworkPolicyAuditResult(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        openExposure
+            ? "Selected workloads have network exposure gaps."
+            : "Selected workloads are covered by matching ingress and egress NetworkPolicies.",
+        "NetworkPolicy coverage was matched against workload selectors without mutating cluster state.",
+        ingressIsolated,
+        egressIsolated,
+        openExposure,
+        matchingPolicies,
+        findings,
+        policies.isEmpty()
+            ? List.of("No NetworkPolicy resources were found in the selected namespace.")
+            : List.of(),
+        Instant.now(clock),
+        freshnessFromWorkloads(workloads));
+  }
+
+  public SecurityPostureResult securityPostureScan(
+      String cluster, String namespace, String serviceOrWorkload, String identity) {
+    scopePolicy.assertAllowed(scopePolicy.authorizeNamespace(cluster, namespace, identity));
+    List<WorkloadInfo> workloads = scopedWorkloads(cluster, namespace, serviceOrWorkload);
+    List<SecurityPostureAnalyzer.Analysis> analyses =
+        workloads.stream().map(securityPostureAnalyzer::analyze).toList();
+    int score =
+        analyses.isEmpty()
+            ? 0
+            : (int)
+                Math.round(
+                    analyses.stream()
+                        .mapToInt(SecurityPostureAnalyzer.Analysis::score)
+                        .average()
+                        .orElse(0.0d));
+    RiskLevel riskLevel =
+        analyses.stream()
+            .map(SecurityPostureAnalyzer.Analysis::riskLevel)
+            .max(Comparator.comparingInt(this::riskSeverity))
+            .orElse(RiskLevel.LOW);
+    List<SecurityPostureResult.SecurityPostureFinding> findings =
+        analyses.stream().flatMap(analysis -> analysis.findings().stream()).limit(10).toList();
+    return new SecurityPostureResult(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        score >= 80
+            ? "Security posture is acceptable but still read-only review only."
+            : "Security posture review found material hardening gaps.",
+        "Security posture checks covered non-root execution, privileged mode, host networking, resource limits, and readiness probes.",
+        score,
+        riskLevel,
+        findings,
+        workloads.stream().anyMatch(workload -> workload.runAsNonRoot() == null)
+            ? List.of("Some workloads did not expose complete security-context metadata.")
+            : List.of(),
+        Instant.now(clock),
+        freshnessFromWorkloads(workloads));
+  }
+
+  public ImageFreshnessCheckResult imageFreshnessCheck(
+      String cluster,
+      String namespace,
+      String serviceOrWorkload,
+      int olderThanDays,
+      String identity) {
+    scopePolicy.assertAllowed(scopePolicy.authorizeNamespace(cluster, namespace, identity));
+    List<WorkloadInfo> workloads = scopedWorkloads(cluster, namespace, serviceOrWorkload);
+    Instant now = Instant.now(clock);
+    List<ImageFreshnessCheckResult.ImageFreshnessEntry> entries =
+        workloads.stream()
+            .map(
+                workload -> {
+                  Instant reference =
+                      workload.imageCreatedAt() != null
+                          ? workload.imageCreatedAt()
+                          : Optional.ofNullable(workload.updatedAt()).orElse(workload.createdAt());
+                  String basis =
+                      workload.imageCreatedAt() != null
+                          ? "image_created_at"
+                          : "workload_updated_at";
+                  Duration age = Duration.between(reference, now);
+                  return new ImageFreshnessCheckResult.ImageFreshnessEntry(
+                      workload.name(),
+                      workload.image(),
+                      workload.imageCreatedAt(),
+                      reference,
+                      basis,
+                      age,
+                      age.compareTo(Duration.ofDays(olderThanDays)) > 0);
+                })
+            .toList();
+    int staleCount =
+        (int) entries.stream().filter(ImageFreshnessCheckResult.ImageFreshnessEntry::stale).count();
+    return new ImageFreshnessCheckResult(
+        cluster,
+        namespace,
+        serviceOrWorkload,
+        staleCount == 0
+            ? "No images exceeded the configured freshness threshold."
+            : staleCount + " workloads exceeded the configured image freshness threshold.",
+        "Image age was derived from image build timestamps when available and otherwise from workload update timestamps.",
+        staleCount,
+        entries,
+        entries.stream().anyMatch(entry -> entry.imageCreatedAt() == null)
+            ? List.of(
+                "Some workloads did not expose image build timestamps; deployed update time was used instead.")
+            : List.of(),
+        Instant.now(clock),
+        freshnessFromWorkloads(workloads));
+  }
+
   private WorkloadHealth buildWorkloadHealth(
       String cluster,
       String namespace,
@@ -391,5 +592,104 @@ public class InventoryService {
       return RiskLevel.MODERATE;
     }
     return RiskLevel.LOW;
+  }
+
+  private List<WorkloadInfo> scopedWorkloads(
+      String cluster, String namespace, String serviceOrWorkload) {
+    if (serviceOrWorkload == null || serviceOrWorkload.isBlank()) {
+      return clusterInventoryPort.listWorkloads(cluster, namespace, null, null);
+    }
+    return List.of(resolveWorkload(cluster, namespace, serviceOrWorkload));
+  }
+
+  private WorkloadInfo resolveWorkload(String cluster, String namespace, String serviceOrWorkload) {
+    return serviceCatalogPort.listServices().stream()
+        .filter(entry -> entry.cluster().equals(cluster))
+        .filter(entry -> entry.namespace().equals(namespace))
+        .filter(
+            entry ->
+                entry.serviceId().equals(serviceOrWorkload)
+                    || entry.workloadName().equals(serviceOrWorkload))
+        .findFirst()
+        .flatMap(
+            entry ->
+                clusterInventoryPort.getWorkload(
+                    cluster, namespace, entry.workloadName(), entry.workloadKind()))
+        .or(
+            () ->
+                clusterInventoryPort.listWorkloads(cluster, namespace, null, null).stream()
+                    .filter(workload -> workload.name().equals(serviceOrWorkload))
+                    .findFirst())
+        .orElseThrow(() -> new NotFoundException("Workload not found in configured scope."));
+  }
+
+  private IngressHealthResult.IngressBackendHealth toIngressHealth(
+      String cluster,
+      String namespace,
+      com.prodops.controltower.mcp.domain.model.IngressInfo ingress,
+      ServiceInfo service,
+      List<WorkloadInfo> workloads) {
+    List<WorkloadInfo> backendWorkloads =
+        workloads.stream()
+            .filter(workload -> selectorsMatch(service.selector(), workload.labels()))
+            .toList();
+    int totalPods =
+        backendWorkloads.stream()
+            .mapToInt(
+                workload ->
+                    clusterInventoryPort.listPodsForWorkload(cluster, namespace, workload).size())
+            .sum();
+    int readyPods =
+        backendWorkloads.stream()
+            .flatMap(
+                workload ->
+                    clusterInventoryPort.listPodsForWorkload(cluster, namespace, workload).stream())
+            .mapToInt(pod -> pod.ready() ? 1 : 0)
+            .sum();
+    HealthVerdict verdict =
+        totalPods == 0 || readyPods == 0
+            ? HealthVerdict.UNHEALTHY
+            : readyPods < totalPods ? HealthVerdict.DEGRADED : HealthVerdict.HEALTHY;
+    return new IngressHealthResult.IngressBackendHealth(
+        ingress.name(), ingress.hosts(), service.name(), readyPods, totalPods, verdict);
+  }
+
+  private boolean selectorsMatch(Map<String, String> selector, Map<String, String> labels) {
+    if (selector == null || selector.isEmpty()) {
+      return true;
+    }
+    return selector.entrySet().stream()
+        .allMatch(entry -> entry.getValue().equals(labels.get(entry.getKey())));
+  }
+
+  private boolean matchesPolicy(NetworkPolicyInfo policy, WorkloadInfo workload) {
+    return policy.podSelector().isEmpty()
+        || policy.podSelector().entrySet().stream()
+            .allMatch(entry -> entry.getValue().equals(workload.labels().get(entry.getKey())));
+  }
+
+  private DataFreshness freshnessFromWorkloads(List<WorkloadInfo> workloads) {
+    Instant observedAt =
+        workloads.stream()
+            .map(
+                workload ->
+                    workload.updatedAt() == null ? workload.createdAt() : workload.updatedAt())
+            .max(Comparator.naturalOrder())
+            .orElse(Instant.EPOCH);
+    Instant now = Instant.now(clock);
+    return new DataFreshness(
+        now,
+        observedAt,
+        observedAt.equals(Instant.EPOCH) ? Duration.ZERO : Duration.between(observedAt, now),
+        false);
+  }
+
+  private int riskSeverity(RiskLevel riskLevel) {
+    return switch (riskLevel) {
+      case CRITICAL -> 4;
+      case HIGH -> 3;
+      case MODERATE -> 2;
+      case LOW -> 1;
+    };
   }
 }

@@ -51,6 +51,10 @@ public record ProdOpsProperties(
       @Min(1) @Max(500) @DefaultValue("20") int maxChangeCandidates,
       @Min(1) @Max(1000) @DefaultValue("60") int maxEvidenceNodes,
       @Min(1) @Max(100) @DefaultValue("5") int maxSimilarIncidents,
+      @Min(1) @Max(500) @DefaultValue("30") int maxTopologyNodes,
+      @Min(1) @Max(200) @DefaultValue("20") int maxAlertGroups,
+      @Min(1) @Max(2000) @DefaultValue("150") int maxTimelineEntries,
+      @Min(1) @Max(20) @DefaultValue("5") int maxComparisonClusters,
       @DefaultValue("true") boolean rawPromqlEnabled,
       @DefaultValue("true") boolean requireOriginValidation) {}
 

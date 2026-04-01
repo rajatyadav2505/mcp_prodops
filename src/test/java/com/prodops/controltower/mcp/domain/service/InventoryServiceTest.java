@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.prodops.controltower.mcp.TestFixtures;
+import com.prodops.controltower.mcp.domain.correlation.SecurityPostureAnalyzer;
 import com.prodops.controltower.mcp.domain.model.LogExcerpt;
 import com.prodops.controltower.mcp.domain.model.ObjectReference;
 import com.prodops.controltower.mcp.domain.model.PodDiagnostics;
@@ -116,6 +117,7 @@ class InventoryServiceTest {
             serviceCatalogPort,
             riskWeightsPort,
             new RiskScoreEngine(),
+            new SecurityPostureAnalyzer(),
             new ScopePolicy(
                 TestFixtures.prodOpsProperties(
                     Path.of("build/test-catalog.yaml"),
